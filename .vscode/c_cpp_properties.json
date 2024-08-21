@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/keti/ros2_ws/install/kcare_robot_ros2_controller_msgs/include/**",
+        "/home/keti/ros2_ws/src/slamware_ros_sdk/install/slamware_ros_sdk/include/**",
+        "/home/keti/ros2_ws/install/slamware_ros_sdk/include/**",
+        "/home/keti/ros2_ws/install/open_vocabulary_detector_msgs/include/**",
+        "/home/keti/ros2_ws/install/kpick_msgs/include/**",
+        "/opt/ros/foxy/include/**",
+        "/home/keti/ros2_ws/src/Azure_Kinect_ROS_Driver/include/**",
+        "/home/keti/ros2_ws/src/kcare_robot_ros2_sdk/kcare_robot_ros2_controller_msgs/include/**",
+        "/home/keti/ros2_ws/src/slamware_ros_sdk/include/**",
+        "/home/keti/ros2_ws/src/slamware_sdk/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

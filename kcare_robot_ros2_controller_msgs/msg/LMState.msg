@@ -1,0 +1,3 @@
+bool state
+float32 current_position
+float32 target_position
