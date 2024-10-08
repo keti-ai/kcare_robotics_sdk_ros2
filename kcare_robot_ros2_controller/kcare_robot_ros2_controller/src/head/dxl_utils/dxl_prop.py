@@ -197,13 +197,16 @@ class Dynamixel:
         while True:
             self.position_write(1, self.dxl_home[0])
             self.position_write(2, self.dxl_home[1])
-            
-            if (self.dxl_home[0] - 5 < self.pose(1) < self.dxl_home[0] + 5) and \
-                (self.dxl_home[1] - 5 < self.pose(2) < self.dxl_home[1] + 5):
+
+            offset = 50     # encoder error offset
+
+            if (self.dxl_home[0] - offset < self.pose(1) < self.dxl_home[0] + offset) and \
+                (self.dxl_home[1] - offset < self.pose(2) < self.dxl_home[1] + offset):
                 self.position_write(1, self.dxl_home[0])
                 self.position_write(2, self.dxl_home[1])
                 
                 break
+
         self.logger.info("Head module arrived home")
             
     def position_control(self, rz, ry):

@@ -12,22 +12,18 @@ class HeadControlNode(Node):
         super().__init__('head_control_node')
         
         self.baudrate = 57600
-        # self.baudrate = 115200        # 24v 소형 다이나믹셀
         self.protocol = 2.0
-        self.device_name = '/dev/ttyHead'
+        self.device_name = '/dev/ttyUSB0'
         self.device_id = [1, 2]
-        self.device_home = [1920, 1920]                 # step  # 12v 대형 다이나믹셀 XH540
-        self.device_limit = [[370, 3460], [1570, 2600]] # step  # 12v 대형 다이나믹셀 XH540
-        # self.device_home = [2048, 2048]                 # step  # 24v 소형 다이나믹셀
-        # self.device_limit = [[500, 3600], [1700, 2700]] # step  # 24v 소형 다이나믹셀
+        self.device_home = [2048, 2048]                 # step  # 24v 소형 다이나믹셀
+        self.device_limit = [[500, 3600], [1700, 2700]] # step  # 24v 소형 다이나믹셀
         self.device_speed = [40, 40] # step
         self.device_deg_offset = [180, 180]
         
         self.dxl = None
-
         self.set()
         self.init()
-        
+
         self.subscriber_move = self.create_subscription(HeadCommand,
                                                         'head/command',
                                                         self.topic_callback_move,
@@ -69,9 +65,9 @@ class HeadControlNode(Node):
         elif msg.control_type == 'velocity':
             rz = int(msg.rz)
             ry = int(msg.ry)
-            
+
             self.dxl.velocity_control(rz, ry)
-            
+
     def topic_callback_go_home(self, msg):
         if msg:
             self.dxl.go_home()
