@@ -162,7 +162,8 @@ class LMControlNode(Node):
 
     def timer_callback(self):
         if self.lm_client.target_step == self.lm_client.current_step:
-            self.lm_client.set_brake(True)
+            # self.lm_client.set_brake(True)
+            pass
         else:
             self.lm_client.set_brake(False)
             #self.lm_client.run_speed(self.lm_client.velocity_step)

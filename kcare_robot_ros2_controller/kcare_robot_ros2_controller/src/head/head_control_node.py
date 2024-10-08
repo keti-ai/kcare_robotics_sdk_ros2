@@ -15,8 +15,8 @@ class HeadControlNode(Node):
         self.protocol = 2.0
         self.device_name = '/dev/ttyUSB0'
         self.device_id = [1, 2]
-        self.device_home = [2048, 2048]                 # step  # 24v 소형 다이나믹셀
-        self.device_limit = [[500, 3600], [1700, 2700]] # step  # 24v 소형 다이나믹셀
+        self.device_home = [2048, 2048]                 # step
+        self.device_limit = [[500, 3600], [1700, 2700]] # step
         self.device_speed = [40, 40] # step
         self.device_deg_offset = [180, 180]
         
