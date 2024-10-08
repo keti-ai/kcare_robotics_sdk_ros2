@@ -11,7 +11,7 @@ setup(
     packages=[package_name],
     data_files=[
         (os.path.join('share', package_name), ['package.xml']),
-        (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
+        (os.path.join('share', package_name, f'launch'), glob(f'launch/*.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -25,6 +25,7 @@ setup(
             'kcare_robot_joy_control_node = kcare_robot_ros2_controller.src.joystick.kcare_robot_joy_control_node:main',
             'lm_control_node = kcare_robot_ros2_controller.src.elevation.lm_control_node:main',
             'head_control_node = kcare_robot_ros2_controller.src.head.head_control_node:main',
+            'gripper_control_node = kcare_robot_ros2_controller.src.gripper.gripper_node:main',
         ],
     },
 )

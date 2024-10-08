@@ -28,6 +28,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/HeadCommand.msg"
   "msg/HeadState.msg"
   "msg/HeadGoHomeRequest.msg"
+  "msg/GripperCommand.msg"
+  "msg/GripperState.msg"
   DEPENDENCIES std_msgs
  )
 

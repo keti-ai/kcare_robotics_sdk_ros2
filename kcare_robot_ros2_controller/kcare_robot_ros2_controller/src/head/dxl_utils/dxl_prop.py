@@ -87,8 +87,6 @@ class Dynamixel:
                                                         2,
                                                         self.dxl_addr["ADDR_OPERATING_MODE"],
                                                         POSITION_CONTROL_MODE)
-                
-                
                 self.control_mode = 'position'
                 
                 self.enable()
@@ -115,7 +113,6 @@ class Dynamixel:
             
         else:
             self.logger.error("Wrong head control mode. Choose in ['position', 'velocity']")
-        
 
     def set_speed(self, id):
         self.u2d2.packet_handler.write4ByteTxRx(self.u2d2.port_handler,
@@ -152,12 +149,9 @@ class Dynamixel:
                                                                                 self.dxl_addr["ADDR_TORQUE_ENABLE"],
                                                                                 False)
             self.dxl_enable = False
-        
 
     def position_write(self, id, goal_position):
-        # print(self.control_mode, self.speed(id))
         if not self.control_mode == "position":
-            # print('a')
             self.set_mode("position")
         conn_result, conn_error = self.u2d2.packet_handler.write4ByteTxRx(self.u2d2.port_handler,
                                                                           id,
@@ -199,7 +193,6 @@ class Dynamixel:
             
         return curr_velocity
         
-    
     def go_home(self):
         while True:
             self.position_write(1, self.dxl_home[0])
@@ -211,7 +204,7 @@ class Dynamixel:
                 self.position_write(2, self.dxl_home[1])
                 
                 break
-        # print(' go home')
+        self.logger.info("Head module arrived home")
             
     def position_control(self, rz, ry):
         
@@ -226,11 +219,8 @@ class Dynamixel:
             self.position_write(id=2, goal_position=ry)
         # else:
         #     self.position_write(id=2, goal_velocity=0)
-            
-        # print(self.safety(id=1), self.safety(id=2), rz, ry)
-        
+
     def velocity_control(self, rz, ry):
-        
         if self.safety(id=1, value=rz):
             self.velocity_write(id=1, goal_velocity=rz)
         else:

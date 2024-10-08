@@ -11,19 +11,20 @@ class HeadControlNode(Node):
     def __init__(self):
         super().__init__('head_control_node')
         
-        self.baudrate = 115200
+        self.baudrate = 57600
+        # self.baudrate = 115200        # 24v 소형 다이나믹셀
         self.protocol = 2.0
         self.device_name = '/dev/ttyHead'
         self.device_id = [1, 2]
-        self.device_home = [2048, 2048]                 # step
-        self.device_limit = [[500, 3600], [1700, 2700]] # step
+        self.device_home = [1920, 1920]                 # step  # 12v 대형 다이나믹셀 XH540
+        self.device_limit = [[370, 3460], [1570, 2600]] # step  # 12v 대형 다이나믹셀 XH540
+        # self.device_home = [2048, 2048]                 # step  # 24v 소형 다이나믹셀
+        # self.device_limit = [[500, 3600], [1700, 2700]] # step  # 24v 소형 다이나믹셀
         self.device_speed = [40, 40] # step
         self.device_deg_offset = [180, 180]
         
         self.dxl = None
-        
-        self.timer_state = self.create_timer(0.5, self.timer_callback_state)
-        
+
         self.set()
         self.init()
         
@@ -40,7 +41,9 @@ class HeadControlNode(Node):
         self.state_publisher = self.create_publisher(HeadState,
                                                      'head/state',
                                                      10)
-    
+
+        self.timer_state = self.create_timer(0.5, self.timer_callback_state)
+
     def set(self):
         self.dxl = Dynamixel(self.get_logger())
         self.dxl.set(baudrate=self.baudrate, 
@@ -55,8 +58,7 @@ class HeadControlNode(Node):
     def init(self):
         self.dxl.init()
         self.dxl.go_home()
-        
-        
+
     def topic_callback_move(self, msg):
         if msg.control_type == 'position':
             rz = int(msg.rz)

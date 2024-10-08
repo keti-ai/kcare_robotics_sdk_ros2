@@ -5,6 +5,8 @@ from rclpy.node import Node
 from rclpy.qos import ReliabilityPolicy, QoSProfile
 from pymodbus.client import ModbusSerialClient
 
+import concurrent.futures
+
 from kcare_robot_ros2_controller_msgs.msg import LMCommand, LMState
 
 
@@ -17,7 +19,7 @@ class LMControllerWrapper:
 
         self.stopped = False
         
-        self.limit_position = (0.87, 0.08)
+        self.limit_position = (2.0, 0.08)
         self.current_position = 0.08     # unit: Meter
         self.target_position = 0.08      # unit: Meter
         
@@ -37,14 +39,15 @@ class LMControllerWrapper:
         self.client.close()
 
     def initializing(self):
-        ret = self.client.write_register(0x002F,0x0F,slave=0)
+        self.set_brake(False)
+        
+        # ret = self.client.write_register(0x002F,0x0F,slave=0)
 
-        # self.client.write_registers(0x0024, [0x0003, 0x2000], slave=0)  # 빠른거 구동속도
-        self.client.write_registers(0x0024, [0x0000, 0xC800], slave=0)  # 느린거 구동속도
+        self.client.write_registers(0x0024, [0x0003, 0x2000], slave=0)  # 빠른거 구동속도
+        # self.client.write_registers(0x0024, [0x0000, 0xC800], slave=0)  # 느린거 구동속도
 
         # self.client.write_register(0x002A, 0x110F, slave=0)  #위 역회전 원점찾기
         self.client.write_register(0x002A, 0x101F, slave=0)  #아래 회전 원점찾기
-        print('asdf  0x110F   ')
         
     def stop(self):
         pass
@@ -64,10 +67,20 @@ class LMControllerWrapper:
         else:
             self.speed = step_speed
     
+    def set_brake(self,bBrake):
+        if bBrake:
+            self.client.write_register(0x002F,0x00,slave=0)
+            # print(f"LM Brake Enabled.")
+        else:
+            self.client.write_register(0x002F,0x0A,slave=0)
+            # print(f"LM Brake Disabled.")
+            
     def get_vel(self):
         return self.speed / 5120 / 1000
 
     def move(self, position):
+        # self.set_brake(False)
+        
         high, low = self.split_32bit_to_16bit(self.speed)
         
         ret = self.client.write_registers(0x0028, [high, low], slave=0)  # 구동속도
@@ -80,6 +93,8 @@ class LMControllerWrapper:
         low_fixed = low_byte
 
         ret = self.client.write_registers(0x002B, [high_fixed, low_fixed], slave=0)
+        
+        # self.set_brake(True)
         
         # current_step = self.client.read_holding_registers(0x002B, 2)
         # print(current_step.registers)
@@ -100,9 +115,12 @@ class LMControllerWrapper:
         self.target_step = (self.target_position - self.limit_position[1]) * 1000 * 5120
         self.target_step = int(self.target_step)
         
-        self.move(self.target_step)
+        if(self.read_current_step() == self.target_step):
+            self.set_brake(True)
+        else:
+            self.set_brake(False)
         
-        self.wait_done()
+        self.move(self.target_step)
         
         self.current_position = self.target_position
         self.current_step = self.target_step
@@ -121,8 +139,13 @@ class LMControllerWrapper:
         # self.target_step = (self.limit_position[1] - self.target_position) * 1000 * 5120
         self.target_step = (self.target_position - self.limit_position[1]) * 1000 * 5120
         self.target_step = int(self.target_step)
+        # print(self.read_current_step())
+        # print(self.target_step)
         
-        print(self.target_step)
+        #if(self.read_current_step() == self.target_step):
+        #    self.set_brake(True)
+        #else:
+        #    self.set_brake(False)
         self.move(self.target_step)
         
         self.current_position = self.target_position
@@ -130,6 +153,16 @@ class LMControllerWrapper:
         
     def get_position(self):
         return self.limit_position[0] - (self.current_step / 5120 / 1000)
+    
+    def read_current_step(self):    ##현재 스탭각 취득
+        ret=self.client.read_holding_registers(0x002B,count=2,slave=0)
+        
+        def get_steps(high_byte,low_byte):
+            high_byte=high_byte & 0x7FFF
+            combined=(high_byte<<16)|low_byte
+            return combined
+        
+        return get_steps(ret.registers[0],ret.registers[1])
     
     def read_motor_state(self):
         buf = self.client.read_holding_registers(0x002E, count=1, slave=0)
@@ -153,13 +186,14 @@ class LMControllerWrapper:
 class LMControlNode(Node):
     def __init__(self):
         super().__init__('lm_control_node')
-        self.lm_speed = 0.01        # m/s
+        self.lm_speed = 0.03        # m/s
         self.lm_move_rel = 0.0      # meter
 
         self.lm_client = LMControllerWrapper("/dev/ttyLM", 9600)
         self.lm_client.connect_lm()
         self.lm_client.initializing()
         self.lm_client.wait_done()
+        #self.lm_client.set_brake(True)
         self.lm_client.set_vel(self.lm_speed)
         
         self.subscriber = self.create_subscription(LMCommand,
@@ -177,6 +211,10 @@ class LMControlNode(Node):
         self.get_logger().info(f"LM control node init done.")
         
     def timer_callback(self):
+        #Current step과 Target Step이 같으면 Brake Enable
+        # if(self.lm_client.read_current_step() == self.lm_client.target_step):
+        #     self.lm_client.set_brake(True)
+            
         # TODO            current position
         pub_msg = LMState()
         pub_msg.state = self.lm_client.state
@@ -186,11 +224,20 @@ class LMControlNode(Node):
             
 
     def topic_callback(self, msg):
-        if msg.cmd_type == 'rel':
+        self.get_logger().info(f"LM move_type: {msg.cmd_type}, move: {msg.move:3f} mm")
+        move = msg.move
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            if msg.cmd_type == 'rel':
+                future = executor.submit(self.lm_client.move_rel, move)
+            elif msg.cmd_type == 'abs':
+                future = executor.submit(self.lm_client.move_abs, move)
+        
+        
+        '''if msg.cmd_type == 'rel':
             self.lm_client.move_rel(msg.move)
         elif msg.cmd_type == 'abs':
             self.lm_client.move_abs(msg.move)
-        self.get_logger().info(f"LM move_type: {msg.cmd_type}, move: {msg.move:3f} mm")
+        self.get_logger().info(f"LM move_type: {msg.cmd_type}, move: {msg.move:3f} mm")'''
 
 
 def main(args=None):

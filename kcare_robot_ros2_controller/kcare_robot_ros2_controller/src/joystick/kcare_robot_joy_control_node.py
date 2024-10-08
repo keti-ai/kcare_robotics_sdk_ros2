@@ -3,7 +3,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
 from slamware_ros_sdk.msg import GoHomeRequest, RobotBasicState
-from kcare_robot_ros2_controller_msgs.msg import LMCommand, HeadCommand, HeadGoHomeRequest
+from kcare_robot_ros2_controller_msgs.msg import LMCommand, HeadCommand, HeadGoHomeRequest, GripperCommand
 
 
 class KcareRobotJoyControlNode(Node):
@@ -32,6 +32,7 @@ class KcareRobotJoyControlNode(Node):
         self.publisher_lm_move = self.create_publisher(LMCommand, 'elevation/command', 10)
         self.publisher_head_move = self.create_publisher(HeadCommand, 'head/command', 10)
         self.publisher_head_home = self.create_publisher(HeadGoHomeRequest, 'head/go_home', 10)
+        self.publisher_gripper = self.create_publisher(GripperCommand, 'gripper/command', 10)
         
         
         # Timer for periodic execution
@@ -122,9 +123,14 @@ class KcareRobotJoyControlNode(Node):
                 head_pose_msg.control_type = 'velocity'
                 # head_pose_msg.control_type = 'position'
                 
-                head_pose_msg.rz  = self.last_joy_msg.axes[3] * 50
+                head_pose_msg.rz = self.last_joy_msg.axes[3] * 50
                 head_pose_msg.ry = self.last_joy_msg.axes[4] * 50
                 self.publisher_head_move.publish(head_pose_msg)
+
+                # gripper
+                gripper_cmd_msg = GripperCommand()
+                gripper_cmd_msg.pose = int((self.last_joy_msg.axes[2] + 1) / 2 * 1000)
+                self.publisher_gripper.publish(gripper_cmd_msg)
 
             else:
                 self.default_twist.linear.x = 0.0
