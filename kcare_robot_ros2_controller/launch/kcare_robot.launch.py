@@ -14,12 +14,18 @@ def generate_launch_description():
         'launch',
         'xarm7_driver.launch.py'
     )
-
-    femto_driver_launch_file = os.path.join(
-        get_package_share_directory('azure_kinect_ros_driver'),
-        'launch',
-        'driver.launch.py',
-    )
+    
+    # femto_driver_launch_file = os.path.join(
+    #     get_package_share_directory('azure_kinect_ros_driver'),
+    #     'launch',
+    #     'driver.launch.py',
+    # )
+    
+    # hand_driver_launch_file = os.path.join(
+    #     get_package_share_directory('orbbec_camera'),
+    #     'launch',
+    #     'dabai_dcw2.launch.py',
+    # )
 
     return LaunchDescription([
         # xarm7_driver.launch.py 포함
@@ -27,10 +33,16 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(xarm_driver_launch_file),
         ),
 
+    
         # driver.launch.py 포함
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(femto_driver_launch_file),
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(femto_driver_launch_file),
+        # ),
+       
+        # gemini_ew launch 포함
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(hand_driver_launch_file),
+        # ),
 
         # Joystick control node
         Node(

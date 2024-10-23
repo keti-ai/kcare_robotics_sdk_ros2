@@ -20,14 +20,14 @@ class LMControllerWrapper:
 
         self.stopped = True
 
-        self.limit_position = (0.0, 0.08)  # 제어 범위 설정 meter(unit)
-        self.current_position = 0.08  # unit: Meter
-        self.target_position = 0.08  # unit: Meter
+        self.limit_position = (0.01, 0.75)  # 제어 범위 설정 meter(unit)
+        self.current_position = 0.0  # unit: Meter
+        self.target_position = 0.01  # unit: Meter
 
-        self.limit_step = (0, 2918400)
+        self.limit_step = (51200, 3840000)
         self.current_step = 0  # unit: Step
-        self.target_step = 0  # unit: Step
-        self.velocity_step = 2048000
+        self.target_step = 51200  # unit: Step
+        self.velocity_step = 204800
 
         self.state = False
 
@@ -117,9 +117,11 @@ class LMControllerWrapper:
         while self.read_motor_state():
             time.sleep(0.05)
 
-        self.set_brake(True)  # 브레이크 동작
-
+        #self.set_brake(True)  # 브레이크 동작
+        time.sleep(0.5)
+        
         self.run_speed(self.velocity_step)
+        time.sleep(0.5)
 
     def split_32bit_to_16bit(self, value):
         # 바이값을 2개의 배열로 변경
@@ -142,7 +144,8 @@ class LMControlNode(Node):
         self.lm_speed = 0.06  # m/s
         self.lm_move_rel = 0.0  # meter
 
-        self.lm_client = LMControllerWrapper("/dev/ttyACM0", 9600)
+        # self.lm_client = LMControllerWrapper("/dev/ttyACM0", 9600)
+        self.lm_client = LMControllerWrapper("/dev/ttyLM", 9600)
         self.lm_client.connect_lm()
         self.lm_client.initializing()
 
@@ -155,20 +158,31 @@ class LMControlNode(Node):
                                                'elevation/state',
                                                10)
 
-        timer_period = 0.2
+        timer_period = 0.1
         self.timer = self.create_timer(timer_period, self.timer_callback)
-
+        self.count_brk = 0
         self.get_logger().info(f"LM control node init done.")
 
     def timer_callback(self):
+        
+        
+        try:
+            self.lm_client.current_step = self.lm_client.read_current_step()
+        except:
+            self.lm_client.current_step=self.lm_client.current_step
         if self.lm_client.target_step == self.lm_client.current_step:
-            # self.lm_client.set_brake(True)
-            pass
+            self.count_brk=self.count_brk+1
+            if self.count_brk > 5:
+                self.lm_client.set_brake(True)
+            time.sleep(0.01)
+            #pass
         else:
             self.lm_client.set_brake(False)
+            self.count_brk=0
+            time.sleep(0.01)
+            self.lm_client.move(self.lm_client.target_step)
             #self.lm_client.run_speed(self.lm_client.velocity_step)
-        self.lm_client.move(self.lm_client.target_step)
-        self.lm_client.current_step = self.lm_client.read_current_step()
+        
 
         #스텝각을 미터로 변환
         self.lm_client.target_position=self.lm_client.step_to_meter(self.lm_client.target_step)
@@ -183,15 +197,21 @@ class LMControlNode(Node):
     def topic_callback(self, msg):
         self.get_logger().info(f"LM move_type: {msg.cmd_type}, move: {msg.move:3f} mm")
         move_step=int(self.lm_client.meter_to_step(msg.move))
-        print(move_step)
+        #print(move_step)
         if msg.cmd_type == 'rel':
-            if self.lm_client.stopped:
-                self.lm_client.set_brake(False)
-            self.lm_client.target_step=self.lm_client.current_step+move_step
+            #self.lm_client.set_brake(False)
+            proposed_target_step=self.lm_client.current_step+move_step
+            #self.lm_client.target_step=self.lm_client.current_step+move_step
         elif msg.cmd_type == 'abs':
-            if self.lm_client.stopped:
-                self.lm_client.set_brake(False)
-            self.lm_client.target_step=move_step
+            #self.lm_client.set_brake(False)
+            #self.lm_client.target_step=move_step
+            proposed_target_step=move_step
+        if proposed_target_step < self.lm_client.limit_step[0]:
+            self.lm_client.target_step = self.lm_client.limit_step[0]
+        elif proposed_target_step > self.lm_client.limit_step[1]:
+            self.lm_client.target_step = self.lm_client.limit_step[1]
+        else:
+            self.lm_client.target_step = proposed_target_step
 
 
 def main(args=None):

@@ -36,8 +36,8 @@ class GripperControllerWrapper:
 class GripperNode(Node):
     def __init__(self):
         super().__init__('gripper_subscriber')
-        # self.gripper_client = GripperControllerWrapper("/dev/ttyGripper", 115200)
-        self.gripper_client = GripperControllerWrapper("/dev/ttyACM2", 115200)
+        self.gripper_client = GripperControllerWrapper("/dev/ttyGripper", 115200)
+        # self.gripper_client = GripperControllerWrapper("/dev/ttyACM2", 115200)
         self.gripper_client.connect_grip()
         self.gripper_client.initializing()
 

@@ -13,7 +13,7 @@ class HeadControlNode(Node):
         
         self.baudrate = 57600
         self.protocol = 2.0
-        self.device_name = '/dev/ttyUSB0'
+        self.device_name = '/dev/ttyHead'
         self.device_id = [1, 2]
         self.device_home = [2048, 2048]                 # step
         self.device_limit = [[500, 3600], [1700, 2700]] # step

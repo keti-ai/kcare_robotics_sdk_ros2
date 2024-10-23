@@ -32,13 +32,16 @@ class KcareRobotJoyControlNode(Node):
         self.publisher_lm_move = self.create_publisher(LMCommand, 'elevation/command', 10)
         self.publisher_head_move = self.create_publisher(HeadCommand, 'head/command', 10)
         self.publisher_head_home = self.create_publisher(HeadGoHomeRequest, 'head/go_home', 10)
-        self.publisher_gripper = self.create_publisher(GripperCommand, 'gripper/command', 10)
+        #self.publisher_gripper = self.create_publisher(GripperCommand, 'gripper/command', 10)
         
         
         # Timer for periodic execution
         timer_period = 0.02      # second
         self.timer_joy = self.create_timer(timer_period, self.timer_callback_joy)
         # self.timer_lm  = self.create_timer(timer_period, self.timer_callback_lm)
+        timer_lm_period = 0.1
+        self.timer_lm = self.create_timer(timer_lm_period, self.timer_callback_lm)
+        
         
         # Variable to store the last received Joy message
         self.last_joy_msg = None
@@ -73,7 +76,7 @@ class KcareRobotJoyControlNode(Node):
                 
                 self.publisher_base_move.publish(self.default_twist)
 
-                # LM 가이드
+                '''# LM 가이드
                 lm_pose_msg = LMCommand()
                 lm_pose_msg.cmd_type = 'rel'
                 
@@ -83,7 +86,7 @@ class KcareRobotJoyControlNode(Node):
                     lm_pose_msg.move = -0.1
                 else:
                     lm_pose_msg.move = 0.0
-                self.publisher_lm_move.publish(lm_pose_msg)
+                self.publisher_lm_move.publish(lm_pose_msg)'''
                 
                 # 헤드
                 head_pose_msg = HeadCommand()
@@ -96,9 +99,9 @@ class KcareRobotJoyControlNode(Node):
                 self.publisher_head_move.publish(head_pose_msg)
 
                 # gripper
-                gripper_cmd_msg = GripperCommand()
-                gripper_cmd_msg.pose = int((self.last_joy_msg.axes[2] + 1) / 2 * 1000)
-                self.publisher_gripper.publish(gripper_cmd_msg)
+                #gripper_cmd_msg = GripperCommand()
+                #gripper_cmd_msg.pose = int((self.last_joy_msg.axes[2] + 1) / 2 * 1000)
+                #self.publisher_gripper.publish(gripper_cmd_msg)
 
             else:
                 self.default_twist.linear.x = 0.0
@@ -115,6 +118,23 @@ class KcareRobotJoyControlNode(Node):
                 head_pose_msg.ry = 0.0
                 self.publisher_head_move.publish(head_pose_msg)
         
+        
+    def timer_callback_lm(self):
+        if self.last_joy_msg:
+            if self.joy_cmd_on:
+                # LM 가이드
+                lm_pose_msg = LMCommand()
+                lm_pose_msg.cmd_type = 'rel'
+                
+                if self.last_joy_msg.buttons[5] == 1:
+                    lm_pose_msg.move = 0.03
+                    self.publisher_lm_move.publish(lm_pose_msg)
+                elif self.last_joy_msg.buttons[3] == 1:
+                    lm_pose_msg.move = -0.03
+                    self.publisher_lm_move.publish(lm_pose_msg)
+                else:
+                    lm_pose_msg.move = 0.0
+                #self.publisher_lm_move.publish(lm_pose_msg)
     # def timer_callback_lm(self):
     #     if not self.lm_client.cur_abs_move:
     #         self.lm_client.move_rel(self.lm_move_rel)
