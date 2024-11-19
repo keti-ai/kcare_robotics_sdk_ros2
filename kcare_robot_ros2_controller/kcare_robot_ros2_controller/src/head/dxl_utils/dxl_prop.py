@@ -210,16 +210,15 @@ class Dynamixel:
         self.logger.info("Head module arrived home")
             
     def position_control(self, rz, ry):
-        
         if self.safety(id=1,value=rz):
-            rz += self.pose(id=1)
-            self.position_write(id=1, goal_position=rz)
+            #rz += self.pose(id=1)
+            self.position_write(id=1, goal_position=self.deg2encoder(rz) + self.deg2encoder(self.dxl_offset[0]))
         # else:
         #     self.position_write(id=1, goal_velocity=0)
             
         if self.safety(id=2,value=ry):
-            ry += self.pose(id=2)
-            self.position_write(id=2, goal_position=ry)
+            #ry += self.pose(id=2)
+            self.position_write(id=2, goal_position=self.deg2encoder(ry) + self.deg2encoder(self.dxl_offset[1]))
         # else:
         #     self.position_write(id=2, goal_velocity=0)
 
