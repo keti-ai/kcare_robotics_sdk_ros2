@@ -20,15 +20,18 @@ class LMControllerWrapper:
 
         self.stopped = True
 
-        self.limit_position = (0.01, 0.75)  # 제어 범위 설정 meter(unit)
+        #self.limit_position = (0.01, 0.75)  # 제어 범위 설정 meter(unit)
+        self.offset_position = 0.51
+        
         self.current_position = 0.0  # unit: Meter
         self.target_position = 0.01  # unit: Meter
 
         self.limit_step = (51200, 3840000)
         self.current_step = 0  # unit: Step
         self.target_step = 51200  # unit: Step
-        self.velocity_step = 204800
-
+        #self.velocity_step = 204800
+        self.velocity_step = 307200
+        
         self.state = False
 
     def connect_lm(self):
@@ -190,21 +193,23 @@ class LMControlNode(Node):
 
         pub_msg = LMState()
         pub_msg.state = self.lm_client.state
-        pub_msg.current_position = self.lm_client.current_position
-        pub_msg.target_position = self.lm_client.target_position
+        pub_msg.current_position = self.lm_client.current_position + self.lm_client.offset_position
+        pub_msg.target_position = self.lm_client.target_position + self.lm_client.offset_position
         self.publisher.publish(pub_msg)
 
     def topic_callback(self, msg):
         self.get_logger().info(f"LM move_type: {msg.cmd_type}, move: {msg.move:3f} mm")
-        move_step=int(self.lm_client.meter_to_step(msg.move))
+        
         #print(move_step)
         if msg.cmd_type == 'rel':
             #self.lm_client.set_brake(False)
+            move_step=int(self.lm_client.meter_to_step(msg.move))
             proposed_target_step=self.lm_client.current_step+move_step
             #self.lm_client.target_step=self.lm_client.current_step+move_step
         elif msg.cmd_type == 'abs':
             #self.lm_client.set_brake(False)
             #self.lm_client.target_step=move_step
+            move_step=int(self.lm_client.meter_to_step(msg.move-self.lm_client.offset_position))
             proposed_target_step=move_step
         if proposed_target_step < self.lm_client.limit_step[0]:
             self.lm_client.target_step = self.lm_client.limit_step[0]

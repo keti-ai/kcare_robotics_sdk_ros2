@@ -211,13 +211,13 @@ class Dynamixel:
             
     def position_control(self, rz, ry):
         
-        if self.safety(id=1):
+        if self.safety(id=1,value=rz):
             rz += self.pose(id=1)
             self.position_write(id=1, goal_position=rz)
         # else:
         #     self.position_write(id=1, goal_velocity=0)
             
-        if self.safety(id=2):
+        if self.safety(id=2,value=ry):
             ry += self.pose(id=2)
             self.position_write(id=2, goal_position=ry)
         # else:

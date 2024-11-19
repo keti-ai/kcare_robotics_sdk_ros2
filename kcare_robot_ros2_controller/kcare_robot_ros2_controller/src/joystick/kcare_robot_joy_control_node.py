@@ -127,10 +127,10 @@ class KcareRobotJoyControlNode(Node):
                 lm_pose_msg.cmd_type = 'rel'
                 
                 if self.last_joy_msg.buttons[5] == 1:
-                    lm_pose_msg.move = 0.03
+                    lm_pose_msg.move = 0.05
                     self.publisher_lm_move.publish(lm_pose_msg)
                 elif self.last_joy_msg.buttons[3] == 1:
-                    lm_pose_msg.move = -0.03
+                    lm_pose_msg.move = -0.05
                     self.publisher_lm_move.publish(lm_pose_msg)
                 else:
                     lm_pose_msg.move = 0.0
