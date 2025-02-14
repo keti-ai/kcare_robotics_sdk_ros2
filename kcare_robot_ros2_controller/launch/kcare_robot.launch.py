@@ -3,10 +3,11 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
+from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     xarm_driver_launch_file = os.path.join(
@@ -15,11 +16,13 @@ def generate_launch_description():
         'xarm7_driver.launch.py'
     )
     
-    # femto_driver_launch_file = os.path.join(
-    #     get_package_share_directory('azure_kinect_ros_driver'),
-    #     'launch',
-    #     'driver.launch.py',
-    # )
+    robot_ip_arg = LaunchConfiguration('robot_ip',default='192.168.1.245')
+
+    #femto_driver_launch_file = os.path.join(
+    #    get_package_share_directory('orbbec_camera'),
+    #    'launch',
+    #    'femto_bolt.launch.py',
+    #)
     
     # hand_driver_launch_file = os.path.join(
     #     get_package_share_directory('orbbec_camera'),
@@ -28,16 +31,24 @@ def generate_launch_description():
     # )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'robot_ip',
+            default_value='192.168.1.245',  # 기본값 설정
+            description='IP address of the robot'
+        ),
+
         # xarm7_driver.launch.py 포함
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(xarm_driver_launch_file),
+            launch_arguments={'robot_ip': robot_ip_arg}.items()
         ),
 
-    
-        # driver.launch.py 포함
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(femto_driver_launch_file),
-        # ),
+
+
+        #driver.launch.py 포함
+        #IncludeLaunchDescription(
+        #    PythonLaunchDescriptionSource(femto_driver_launch_file),
+        #),
        
         # gemini_ew launch 포함
         # IncludeLaunchDescription(
