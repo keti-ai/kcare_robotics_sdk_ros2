@@ -2,8 +2,10 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import ReliabilityPolicy, QoSProfile
 
-import minimalmodbus
+from pymodbus.client import ModbusSerialClient
 import concurrent.futures
+
+import time
 
 from kcare_robot_ros2_controller_msgs.msg import GripperCommand, GripperState
 
@@ -12,37 +14,30 @@ class GripperControllerWrapper:
         self.port = port
         self.baud = baud
         
-        # Initialize the minimalmodbus instrument
-        self.instrument = minimalmodbus.Instrument(self.port, 1)  # 1 is the slave address
-        self.instrument.serial.baudrate = self.baud
-        self.instrument.serial.timeout = 1  # seconds
+        # Initialize the pymodbus
+        self.client = ModbusSerialClient(self.port, baudrate=self.baud)
+
 
     def connect_grip(self):
         # minimalmodbus automatically handles serial port open/close, so no need for a separate connect method
-        pass
+        self.client.connect()
 
     def disconnect_grip(self):
-        self.instrument.serial.close()
+        self.client.close()
 
     def gripper_initialize(self):
-        """ 그리퍼 초기화 (Modbus Holding Register Address 0 -> Command 101) """
-        self.instrument.write_register(0, 101)
-
-        self.instrument.write_register(0, 213)  # Set Motor Speed Command
-        self.instrument.write_register(1, 100)  # Set Speed to 100% (Max)
+        self.client.write_register(0,101,slave=1)
 
     def set_finger_position(self, position):
-        """
-        그리퍼 핑거 위치 설정
-        position (int): 0 ~ 1000 (0: 닫힘, 1000: 열림)
-        Modbus Holding Register Address 0 -> Command 104
-        Modbus Holding Register Address 1 -> Target Position (0~1000)
-        """
         if not (0 <= position <= 1000):
-            raise ValueError("Finger position must be between 0 and 1000.")
+            print("⚠️ 유효한 값이 아닙니다. (0 ~ 1000)")
+            return
         
-        self.instrument.write_register(0, 104)  # Set Finger Position Command
-        self.instrument.write_register(1, position)  # Target Position
+        print(f"🔄 Gripper Finger Position 설정: {position}...")
+        self.client.write_register(0, 104, slave=1)
+        self.client.write_register(1, position, slave=1)  # 목표 값 설정
+        print(f"✅ Finger Position {position} 설정 완료!")
+
 
 class GripperNode(Node):
     def __init__(self):
