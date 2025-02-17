@@ -7,7 +7,8 @@ import concurrent.futures
 
 import time
 
-from kcare_robot_ros2_controller_msgs.msg import GripperCommand, GripperState
+from kcare_robot_ros2_controller_msgs.msg import GripperState
+from kcare_robot_ros2_controller_msgs.srv import GripperCommand
 
 class GripperControllerWrapper:
     def __init__(self, port, baud):
@@ -19,7 +20,7 @@ class GripperControllerWrapper:
 
 
     def connect_grip(self):
-        # minimalmodbus automatically handles serial port open/close, so no need for a separate connect method
+
         self.client.connect()
 
     def disconnect_grip(self):
@@ -28,15 +29,40 @@ class GripperControllerWrapper:
     def gripper_initialize(self):
         self.client.write_register(0,101,slave=1)
 
+        self.client.write_register(0,213,slave=1)
+        self.client.write_register(1,100,slave=1)
+
     def set_finger_position(self, position):
-        if not (0 <= position <= 1000):
-            print("⚠️ 유효한 값이 아닙니다. (0 ~ 1000)")
-            return
-        
-        print(f"🔄 Gripper Finger Position 설정: {position}...")
         self.client.write_register(0, 104, slave=1)
         self.client.write_register(1, position, slave=1)  # 목표 값 설정
-        print(f"✅ Finger Position {position} 설정 완료!")
+
+    def set_motor_torque(self,ratio):
+        self.client.write_register(0,212, slave=1)
+        self.client.write_register(1,ratio,slave=1)
+
+
+    def read_status(self):
+        MOTOR_STATUS_REGISTERS = {
+        "operation_mode": 0x0000,   # 모터 동작 모드
+        "speed": 0x0001,            # 현재 속도
+        "position": 0x0002,         # 현재 위치
+        "torque": 0x0003,           # 현재 토크 값
+        "temperature": 0x0004,      # 모터 온도
+        "voltage": 0x0005,          # 공급 전압
+        "current": 0x0006,          # 현재 전류
+        "error_status": 0x0007      # 에러 상태
+        }
+        for name, address in MOTOR_STATUS_REGISTERS.items():
+            try:
+                result = self.client.read_holding_registers(address, count=1, slave=1)
+                if result.isError():
+                    print(f"⚠️ [{name}] 읽기 실패! (Address: {hex(address)})")
+                else:
+                    value = result.registers[0]
+                    print(f"✅ {name}: {value} (Address: {hex(address)})")
+            except Exception as e:
+                print(f"❌ [{name}] 오류 발생: {e}")
+
 
 
 class GripperNode(Node):
@@ -47,18 +73,32 @@ class GripperNode(Node):
         self.gripper_client.connect_grip()
         self.gripper_client.gripper_initialize()
 
-        self.subscriber = self.create_subscription(
-            GripperCommand,
-            'gripper/command',
-            self.topic_callback,
-            QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE)
-        )
+        self.gripper_service= self.create_service(GripperCommand,'gripper/command',self.set_gripperpose_callback)
 
-    def topic_callback(self, msg):
-        position = msg.pose  # GripperCommand 메시지에서 pose 값 사용 (0~1000 범위)
+        self.publisher = self.create_publisher(GripperState,
+                                               'gripper/state',
+                                               10)
+
+        timer_period = 0.05
+        self.timer = self.create_timer(timer_period, self.timer_callback)
         
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.submit(self.gripper_client.set_finger_position, position)
+
+    def set_gripperpose_callback(self,request,response):
+        self.get_logger().info(f"Gripper Service Call.")
+        if (0 <= request.pose <= 1000 and 50<= request.force <= 100):
+            self.gripper_client.set_motor_torque(request.force)
+            self.gripper_client.set_finger_position(request.pose)
+            self.get_logger().info(f"Gripper Work Fine. Pose : {request.pose}, Force : {request.force}.")
+            response.successed=True
+        else:
+            self.get_logger().info(f"Gripper request out of range.")
+            response.successed=False
+        return response
+
+
+    def timer_callback(self):
+        self.gripper_client.read_status()
+
 
 def main(args=None):
     rclpy.init(args=args)
