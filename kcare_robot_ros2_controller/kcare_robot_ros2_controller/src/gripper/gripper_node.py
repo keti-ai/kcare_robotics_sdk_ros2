@@ -3,8 +3,6 @@ from rclpy.node import Node
 from rclpy.qos import ReliabilityPolicy, QoSProfile
 
 from pymodbus.client import ModbusSerialClient
-import concurrent.futures
-
 import time
 
 from kcare_robot_ros2_controller_msgs.msg import GripperState
@@ -18,9 +16,7 @@ class GripperControllerWrapper:
         # Initialize the pymodbus
         self.client = ModbusSerialClient(self.port, baudrate=self.baud)
 
-
     def connect_grip(self):
-
         self.client.connect()
 
     def disconnect_grip(self):
@@ -28,9 +24,10 @@ class GripperControllerWrapper:
 
     def gripper_initialize(self):
         self.client.write_register(0,101,slave=1)
-
+        time.sleep(0.1)
         self.client.write_register(0,213,slave=1)
         self.client.write_register(1,100,slave=1)
+        time.sleep(0.1)
 
     def set_finger_position(self, position):
         self.client.write_register(0, 104, slave=1)
@@ -42,44 +39,55 @@ class GripperControllerWrapper:
 
 
     def read_status(self):
-        MOTOR_STATUS_REGISTERS = {
-        "operation_mode": 0x0000,   # 모터 동작 모드
-        "speed": 0x0001,            # 현재 속도
-        "position": 0x0002,         # 현재 위치
-        "torque": 0x0003,           # 현재 토크 값
-        "temperature": 0x0004,      # 모터 온도
-        "voltage": 0x0005,          # 공급 전압
-        "current": 0x0006,          # 현재 전류
-        "error_status": 0x0007      # 에러 상태
-        }
-        for name, address in MOTOR_STATUS_REGISTERS.items():
-            try:
-                result = self.client.read_holding_registers(address, count=1, slave=1)
-                if result.isError():
-                    print(f"⚠️ [{name}] 읽기 실패! (Address: {hex(address)})")
-                else:
-                    value = result.registers[0]
-                    print(f"✅ {name}: {value} (Address: {hex(address)})")
-            except Exception as e:
-                print(f"❌ [{name}] 오류 발생: {e}")
+        """
+        모터 상태를 읽어 GripperState 메시지 형태로 반환하는 함수
+        """
+        try:
+            # Modbus 요청 시 `slave=1`을 키워드 인자로 전달
+            registers = self.client.read_holding_registers(0, count=5, slave=1)
+            
+            # 요청 실패 처리
+            if not registers or registers.isError():
+                print("⚠️ 모터 상태 읽기 실패!")
+                return None
+        except Exception as e:
+            print(f"❌ 모터 상태 읽기 오류: {e}")
+            return None
+
+        # GripperState 메시지에 매핑
+        gripper_state = GripperState()
+        gripper_state.motor_position = registers.registers[1]
+        gripper_state.motor_current = registers.registers[2]
+        gripper_state.motor_velocity = registers.registers[3]
+        gripper_state.finger_position = registers.registers[4]
+
+        # 상태 플래그 (비트 마스킹 사용 가능)
+        gripper_state.motor_enabled = bool(registers.registers[0] & 0x01)
+        gripper_state.gripper_initialized = bool(registers.registers[0] & 0x02)
+        gripper_state.position_ctrl_mode = bool(registers.registers[0] & 0x04)
+        gripper_state.velocity_ctrl_mode = bool(registers.registers[0] & 0x08)
+        gripper_state.current_ctrl_mode = bool(registers.registers[0] & 0x10)
+        gripper_state.grp_opened = bool(registers.registers[0] & 0x20)
+        gripper_state.grp_closed = bool(registers.registers[0] & 0x40)
+        gripper_state.motor_fault = bool(registers.registers[0] & 0x80)
+
+        return gripper_state
 
 
 
 class GripperNode(Node):
     def __init__(self):
         super().__init__('gripper_subscriber')
+
         self.gripper_client = GripperControllerWrapper("/dev/ttyGripper", 115200)
-        # self.gripper_client = GripperControllerWrapper("/dev/ttyACM2", 115200)
         self.gripper_client.connect_grip()
         self.gripper_client.gripper_initialize()
 
         self.gripper_service= self.create_service(GripperCommand,'gripper/command',self.set_gripperpose_callback)
 
-        self.publisher = self.create_publisher(GripperState,
-                                               'gripper/state',
-                                               10)
+        self.publisher = self.create_publisher(GripperState,'gripper/state',10)
 
-        timer_period = 0.05
+        timer_period = 0.1
         self.timer = self.create_timer(timer_period, self.timer_callback)
         
 
@@ -97,7 +105,11 @@ class GripperNode(Node):
 
 
     def timer_callback(self):
-        self.gripper_client.read_status()
+        # Gripper 상태 읽기
+        gripper_state = self.gripper_client.read_status()
+        if gripper_state:
+            self.publisher.publish(gripper_state)
+            self.get_logger().info(f"Published Gripper State: {gripper_state}")
 
 
 def main(args=None):
