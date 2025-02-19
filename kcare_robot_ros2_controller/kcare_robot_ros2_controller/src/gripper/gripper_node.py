@@ -109,7 +109,7 @@ class GripperNode(Node):
         gripper_state = self.gripper_client.read_status()
         if gripper_state:
             self.publisher.publish(gripper_state)
-            self.get_logger().info(f"Published Gripper State: {gripper_state}")
+            #self.get_logger().info(f"Published Gripper State: {gripper_state}")
 
 
 def main(args=None):

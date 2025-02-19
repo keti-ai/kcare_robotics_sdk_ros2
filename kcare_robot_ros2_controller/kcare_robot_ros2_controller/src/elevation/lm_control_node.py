@@ -21,7 +21,7 @@ class LMControllerWrapper:
         self.stopped = True
 
         #self.limit_position = (0.01, 0.75)  # 제어 범위 설정 meter(unit)
-        self.offset_position = 0.51
+        self.offset_position = 0.185
         
         self.current_position = 0.0  # unit: Meter
         self.target_position = 0.01  # unit: Meter
