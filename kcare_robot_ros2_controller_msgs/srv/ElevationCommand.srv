@@ -1,0 +1,4 @@
+float32 move
+bool until_complete
+---
+bool successed

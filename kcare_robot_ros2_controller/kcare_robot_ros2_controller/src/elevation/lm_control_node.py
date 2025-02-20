@@ -1,15 +1,16 @@
 import time
-from datetime import datetime
 
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import ReliabilityPolicy, QoSProfile
+
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+
 from pymodbus.client import ModbusSerialClient
 
-import concurrent.futures
-
 from kcare_robot_ros2_controller_msgs.msg import LMCommand, LMState
-
+from kcare_robot_ros2_controller_msgs.srv import ElevationCommand
 
 class LMControllerWrapper:
     def __init__(self, port, baud):
@@ -47,11 +48,11 @@ class LMControllerWrapper:
         if bBrake:
             self.client.write_register(0x002F, 0x00, slave=1)
             self.stopped = True
-            # print(f"LM Brake Enabled.")
+            print(f"LM Brake Enabled.")
         else:
             self.client.write_register(0x002F, 0x0A, slave=1)
             self.stopped = False
-            # print(f"LM Brake Disabled.")
+            print(f"LM Brake Disabled.")
 
     def motor_stop(self, bEna=True):
         if bEna:
@@ -152,45 +153,95 @@ class LMControlNode(Node):
         self.lm_client.connect_lm()
         self.lm_client.initializing()
 
+        self.group1 = MutuallyExclusiveCallbackGroup()
+        self.group2 = MutuallyExclusiveCallbackGroup()
+
+
+
+        self.srv = self.create_service(ElevationCommand,'elevation/set_position',self.set_elevation_callback, callback_group=self.group1)
+
         self.subscriber = self.create_subscription(LMCommand,
                                                    'elevation/command',
                                                    self.topic_callback,
-                                                   10)
+                                                   10,callback_group=self.group1)
 
         self.publisher = self.create_publisher(LMState,
                                                'elevation/state',
                                                10)
 
         timer_period = 0.1
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.timer = self.create_timer(timer_period, self.timer_callback, callback_group=self.group2)
         self.count_brk = 0
         self.get_logger().info(f"LM control node init done.")
 
+
+    def set_elevation_callback(self,request,response):
+        self.get_logger().info(f"🔹 Received Elevation Service: Move {request.move} mm")
+        move_step=int(self.lm_client.meter_to_step(request.move-self.lm_client.offset_position))
+        proposed_target_step=move_step
+        if proposed_target_step < self.lm_client.limit_step[0]:
+            response.successed=False
+            return response
+        elif proposed_target_step > self.lm_client.limit_step[1]:
+            response.successed=False
+            return response
+        else:
+            self.lm_client.target_step = proposed_target_step
+            response.successed=True
+
+        if request.until_complete:
+            while not self.lm_client.target_step == self.lm_client.current_step:
+                time.sleep(0.1)
+
+        self.get_logger().info(f"🔹 Received Elevation Service Complete")
+        response.successed=True
+        return response
+
+
     def timer_callback(self):
-        
-        
         try:
             self.lm_client.current_step = self.lm_client.read_current_step()
         except:
             self.lm_client.current_step=self.lm_client.current_step
+
+
         if self.lm_client.target_step == self.lm_client.current_step:
-            self.count_brk=self.count_brk+1
-            if self.count_brk > 5:
-                self.lm_client.set_brake(True)
-            time.sleep(0.01)
-            #pass
+            if not self.lm_client.stopped:
+                self.count_brk=self.count_brk+1
+                if self.count_brk > 3:
+                    self.lm_client.set_brake(True)
+                    #time.sleep(2)
+            else:
+                self.count_brk = 0
         else:
-            self.lm_client.set_brake(False)
-            self.count_brk=0
-            time.sleep(0.01)
+            if self.lm_client.stopped:
+                self.lm_client.set_brake(False)
+                #time.sleep(2)
             self.lm_client.move(self.lm_client.target_step)
-            #self.lm_client.run_speed(self.lm_client.velocity_step)
+
+
+        # if self.lm_client.target_step == self.lm_client.current_step:
+        #     if self.count_brk > 5:
+        #         self.get_logger().info(f"🔹 LM Brake start")
+        #         self.lm_client.set_brake(True)
+        #         self.get_logger().info(f"🔹 LM Brake stop")
+        #     else:
+        #         self.count_brk=self.count_brk+1
+        #     time.sleep(0.01)
+        #     #pass
+        # else:
+        #     self.lm_client.set_brake(False)
+        #     self.count_brk=0
+        #     time.sleep(0.01)
+        #     self.lm_client.move(self.lm_client.target_step)
+        #     #self.lm_client.run_speed(self.lm_client.velocity_step)
         
 
         #스텝각을 미터로 변환
         self.lm_client.target_position=self.lm_client.step_to_meter(self.lm_client.target_step)
         self.lm_client.current_position = self.lm_client.step_to_meter(self.lm_client.current_step)
 
+        self.get_logger().info(f"Target pose : {self.lm_client.target_position}, Current pose : {self.lm_client.current_position}")
         pub_msg = LMState()
         pub_msg.state = self.lm_client.state
         pub_msg.current_position = self.lm_client.current_position + self.lm_client.offset_position
@@ -198,7 +249,7 @@ class LMControlNode(Node):
         self.publisher.publish(pub_msg)
 
     def topic_callback(self, msg):
-        self.get_logger().info(f"LM move_type: {msg.cmd_type}, move: {msg.move:3f} mm")
+        #self.get_logger().info(f"LM move_type: {msg.cmd_type}, move: {msg.move:3f} mm")
         
         #print(move_step)
         if msg.cmd_type == 'rel':
@@ -222,9 +273,18 @@ class LMControlNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = LMControlNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+
+    executor = MultiThreadedExecutor(num_threads=3)
+    executor.add_node(node)
+
+    try:
+        node.get_logger().info("🚀 LMControlNode running with MultiThreadedExecutor")
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

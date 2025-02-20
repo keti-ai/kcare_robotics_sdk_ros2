@@ -98,4 +98,15 @@ def generate_launch_description():
                 # 필요한 경우 파라미터를 추가하세요
             }]
         ),
+
+        # # Master Control node
+        # Node(
+        #     package='kcare_robot_ros2_controller',
+        #     executable='master_node',
+        #     name='master_node',
+        #     output='screen',
+        #     parameters=[{
+        #         # 필요한 경우 파라미터를 추가하세요
+        #     }]
+        # ),
     ])
