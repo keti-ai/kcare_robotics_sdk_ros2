@@ -241,7 +241,7 @@ class LMControlNode(Node):
         self.lm_client.target_position=self.lm_client.step_to_meter(self.lm_client.target_step)
         self.lm_client.current_position = self.lm_client.step_to_meter(self.lm_client.current_step)
 
-        self.get_logger().info(f"Target pose : {self.lm_client.target_position}, Current pose : {self.lm_client.current_position}")
+        #self.get_logger().info(f"Target pose : {self.lm_client.target_position}, Current pose : {self.lm_client.current_position}")
         pub_msg = LMState()
         pub_msg.state = self.lm_client.state
         pub_msg.current_position = self.lm_client.current_position + self.lm_client.offset_position

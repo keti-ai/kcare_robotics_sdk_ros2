@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.action import ActionServer
+from rclpy.action.server import ServerGoalHandle
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
@@ -10,9 +11,12 @@ from xarm_msgs.msg import RobotMsg
 from xarm_msgs.srv import MoveJoint, MoveCartesian, SetInt16, SetInt16ById, Call
 from kcare_robot_ros2_controller_msgs.msg import HeadCommand, HeadState, LMCommand, LMState
 from kcare_robot_ros2_controller_msgs.srv import ElevationCommand, GripperCommand
-from rosinterfaces.action import SendStringData
+from rosinterfaces.action import SendStringData as SendData
 
-from pyconnect.utils import str2dict
+from  pyconnect.utils import str2dict, data_info, dict2str
+
+from femto2handCalib import calibration
+import copy
 
 import time, threading
 
@@ -24,7 +28,12 @@ class KcareMaster(Node):
         self.group2 = MutuallyExclusiveCallbackGroup()
 
 
-        self.kcaremaster_action_server = ActionServer(self,SendStringData,'/approach',self.task_approach_callback,callback_group=self.group1)
+        self.action_server = {
+            'action_approach' : ActionServer(self,SendData,'/approach',lambda goal_handle: self.action_task_callback(goal_handle, 'approach'),callback_group=self.group1),
+            'action_pick' : ActionServer(self,SendData,'/pick',lambda goal_handle: self.action_task_callback(goal_handle, 'pick'),callback_group=self.group1),
+        }
+
+        #self.kcaremaster_action_server = ActionServer(self,SendStringData,'/approach',self.task_approach_callback,callback_group=self.group1)
 
         self.service_clients = {
             'set_servo_angle': self.create_client(MoveJoint, '/xarm/set_servo_angle'),
@@ -33,7 +42,8 @@ class KcareMaster(Node):
             'set_mode': self.create_client(SetInt16, '/xarm/set_mode'),
             'set_state': self.create_client(SetInt16, '/xarm/set_state'),
             'clean_error': self.create_client(Call, '/xarm/clean_error'),
-            'elevation_command': self.create_client(ElevationCommand,'/elevation/set_position')
+            'elevation_command': self.create_client(ElevationCommand,'/elevation/set_position'),
+            'gripper_command': self.create_client(GripperCommand, '/gripper/command')
         }
         
         self.topic_subscriber = {
@@ -46,6 +56,12 @@ class KcareMaster(Node):
         self.topic_publisher = {
             'head_command' : self.create_publisher(HeadCommand,'/head/command',10),
         }
+
+
+        self.lm_current_pose=0.0
+        self.pose=[0.0,0.0,0.0,0.0,0.0,0.0]
+        self.head_state=[0.0,0.0]
+        self.femto_calib=calibration()
 
         self.topic_ready = {key: False for key in self.topic_subscriber.keys()}
 
@@ -201,12 +217,12 @@ class KcareMaster(Node):
 
         if future.result() is not None:
             response = future.result()
-            self.get_logger().info(f'Servo Joint Response: {response.ret}, Message: {response.message}')
+            #self.get_logger().info(f'Servo Joint Response: {response.ret}, Message: {response.message}')
         else:
             self.get_logger().error('Failed to call service /xarm/set_servo_angle')
 
 
-    def call_set_servo_move(self, pose, relative=False):
+    def call_set_servo_move(self, pose, relative=False,mvtype=0):
         # 홈 위치로 서보 각도 설정 서비스 호출 예시
         request = MoveCartesian.Request()
         # 홈 위치 각도 설정
@@ -216,6 +232,7 @@ class KcareMaster(Node):
         request.mvtime = 0.0    # 이동 시간 설정
         request.wait = True    # 완료 대기 설정
         request.relative = relative
+        request.motion_type = mvtype
 
         # 서비스 호출
         future = self.service_clients['set_servo_move'].call_async(request)
@@ -280,6 +297,15 @@ class KcareMaster(Node):
         else:
             self.get_logger().error('Failed to call service /elevation/command')
 
+    def call_gripper_command(self,pose,force):
+        request=GripperCommand.Request()
+        request.pose=pose
+        request.force=force
+
+        future = self.service_clients['gripper_command'].call_async(request)
+
+
+
     # def elevation_command(self,meter):
     #     # Input value range 0.195 0.935 
     #     lm_msg=LMCommand()
@@ -325,27 +351,109 @@ class KcareMaster(Node):
         self.head_state=[msg.current_rz,msg.current_ry]
 
 
-    def task_approach_callback(self,goal_handle):
-        self.get_logger().info('Executing goal...')
+    def action_task_callback(self,goal_handle, action_name: str):
+        #self.get_logger().info('Received action')
 
-        feedback_msg = SendStringData.Feedback()
-        feedback_msg.status = "Appraoch to target ..."
+        rev_data = str2dict(goal_handle.request.data_goal)
+        feedback = SendData.Feedback()
 
-        self.get_logger().info(f"goal info {goal_handle.request.data_goal}")
 
-        goal_handle.publish_feedback(feedback_msg)
+        if action_name == 'approach':
+            #self.get_logger().info('Received action approach')
+            #self.debug_approach(rev_data)
+            self.task_approach(rev_data)
+        elif action_name == 'pick':
+            self.get_logger().info('Received action pick')
+            self.task_pick()
 
-        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
-        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,0.0,0.0])
-        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
-
+        feedback.status = "Processing complete"
+        goal_handle.publish_feedback(feedback)
 
         goal_handle.succeed()
 
-        result = SendStringData.Result()
-        result.data_result = "Finished Action Server"
-        self.get_logger().info('Result: {0}'.format(result.data_result))
+
+        result = SendData.Result()
+        result.data_result = dict2str(rev_data)
+        #self.get_logger().info('Goal completed and data sent back')
         return result
+
+
+    def debug_approach(self,rev_data):
+        self.call_elevation_command(0.2)
+        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
+        
+        img_pose=rev_data['pose']
+
+        mid_x = (img_pose[0]+img_pose[2])/2
+        mid_y = (img_pose[1]+img_pose[3])/2
+        obj_depth = img_pose[4]
+
+        cur_lift_position=copy.deepcopy(self.lm_current_pose)
+        cur_arm_robot_pose=copy.deepcopy(self.pose)
+        cur_angle_ry=copy.deepcopy(self.head_state[1])
+        cur_angle_rz=copy.deepcopy(self.head_state[0])
+        
+        
+        self.trans_lift_position,self.trans_armrobot_XYZ=self.femto_calib.convert_femto_to_arm(mid_x,mid_y,obj_depth,#[x,y,z] mm 
+                                                                                cur_lift_position, # scalar (meter)
+                                                                                cur_arm_robot_pose, # x y z r p y
+                                                                                cur_angle_ry,# scalar
+                                                                                cur_angle_rz# scalar
+                                                                                )
+
+        self.trans_x,self.trans_y,self.trans_z=self.trans_armrobot_XYZ
+        self.get_logger().info(f'IMG Pose : {img_pose}, Lift : {self.trans_lift_position},Trans X: {self.trans_x}, Trans Y: {self.trans_y}, Trans Z: {self.trans_z}')
+        
+
+        elev_offset = 0.0
+
+
+    def task_approach(self,rev_data):
+        img_pose=rev_data['pose']
+
+        self.call_gripper_command(1000,50)
+        self.call_elevation_command(0.2)
+        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
+
+        mid_x = (img_pose[0]+img_pose[2])/2
+        mid_y = (img_pose[1]+img_pose[3])/2
+        obj_depth = img_pose[4]
+
+        cur_lift_position=copy.deepcopy(self.lm_current_pose)
+        cur_arm_robot_pose=copy.deepcopy(self.pose)
+        cur_angle_ry=copy.deepcopy(self.head_state[1])
+        cur_angle_rz=copy.deepcopy(self.head_state[0])
+        
+        
+        self.trans_lift_position,self.trans_armrobot_XYZ=self.femto_calib.convert_femto_to_arm(mid_x,mid_y,obj_depth,#[x,y,z] mm 
+                                                                                cur_lift_position, # scalar (meter)
+                                                                                cur_arm_robot_pose, # x y z r p y
+                                                                                cur_angle_ry,# scalar
+                                                                                cur_angle_rz# scalar
+                                                                                )
+
+
+        self.trans_x,self.trans_y,self.trans_z=self.trans_armrobot_XYZ
+        self.get_logger().info(f'Lift : {self.trans_lift_position},Trans X: {self.trans_x}, Trans Y: {self.trans_y}, Trans Z: {self.trans_z}')
+        
+
+        elev_offset = 0.0
+        transy_offset = 40.0
+        self.call_elevation_command(self.trans_lift_position+elev_offset)
+        self.call_set_servo_move([0.0,self.trans_y-transy_offset,0.0,0.0,0.0,0.0],relative=True)
+        self.get_logger().info(f'Calibration Movement Complete')
+        #self.call_elevation_command(0.2)
+
+    def task_pick(self):
+        #self.call_gripper_command(1000,50)
+        transx_offset=200.0
+        self.call_set_servo_move([self.trans_x-transx_offset,0.0,0.0,0.0,0.0,0.0],relative=True)
+        self.call_set_servo_move([-(self.trans_x-transx_offset)+50.0,0.0,0.0,0.0,0.0,0.0],relative=True)
+        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
+        self.call_elevation_command(0.2)
+
+
+
 
     def spin_once_in_thread(self):
         # spin_once를 별도의 스레드에서 실행하여 토픽 콜백을 처리
@@ -354,13 +462,19 @@ class KcareMaster(Node):
             time.sleep(0.05)  # 콜백을 주기적으로 처리할 수 있도록 약간의 대기 시간 추가
             self.get_logger().info("Spinning")
 
+
+
     def init_robot(self):
+        self.call_gripper_command(1000,50)
+
         self.call_motion_enable(8, 1)
         self.call_set_mode(0)
         self.call_set_state(0)
 
-        self.call_elevation_command(0.195)
+        self.call_elevation_command(0.2)
         self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,0.0,0.0])
+
+        self.head_command(0.0,15.0)
 
 
 def main(args=None):
@@ -389,17 +503,6 @@ def main(args=None):
         init_thread.join()
         master_node.destroy_node()
         rclpy.shutdown()
-
-
-    #master_node.call_motion_enable(8, 1)
-    #master_node.call_set_mode(0)
-    #master_node.call_set_state(0)
-
-    #master_node.elevation_command(0.195)
-    #master_node.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
-
-    #master_node.head_command(0.0,15.0)
-    
 
 if __name__ == '__main__':
     main()
