@@ -77,7 +77,7 @@ class calibration():
         link_point=self.convert_sensor_to_link(target_point,current_ry,current_rz)
         point_x,point_y,point_z=link_point
         
-        #링크에서 카메라좌표계에서 로봇좌표계로 변환
+        #링크에서 카메라좌표계에서 베이스로봇좌표계로 변환
         robot_x=point_z
         robot_y=-point_x
         robot_z=-point_y             
@@ -90,6 +90,10 @@ class calibration():
  
         #리스트 이동 거리 계산       
         trans_lift_position=(base_femto_point[2]-base_cur_robot[2])
+        print(f"robot point :{robot_x,robot_y,robot_z}")
+        print(f"base_femto_point :{base_femto_point}")
+        print(f"base_cur_robot :{base_cur_robot}")
+
  
         #리프트 이동 후, arm로봇의 이동거리 계산 
         target_base2LMbase_robot=copy.deepcopy(current_base2LMbase_robot)

@@ -109,7 +109,7 @@ class LMControllerWrapper:
     def initializing(self):
         # 포토센서기반 리니어 가이드 위치 초기화
         self.set_brake(False)  # 브레이크 해제
-        self.reset_speed(204800)  # 초기위치모드 구동속도 조절
+        self.reset_speed(51200)  # 초기위치모드 구동속도 조절
         self.client.write_register(0x002A, 0x100F, slave=1)  # 속도모드 아래 회전 원점찾기
 
         # 모터 정지 상태 확인

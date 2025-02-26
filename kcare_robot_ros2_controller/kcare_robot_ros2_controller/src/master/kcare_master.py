@@ -19,6 +19,11 @@ from femto2handCalib import calibration
 import copy
 
 import time, threading
+import math
+
+
+
+
 
 class KcareMaster(Node):
     def __init__(self):
@@ -31,6 +36,7 @@ class KcareMaster(Node):
         self.action_server = {
             'action_approach' : ActionServer(self,SendData,'/approach',lambda goal_handle: self.action_task_callback(goal_handle, 'approach'),callback_group=self.group1),
             'action_pick' : ActionServer(self,SendData,'/pick',lambda goal_handle: self.action_task_callback(goal_handle, 'pick'),callback_group=self.group1),
+            'action_place' : ActionServer(self,SendData,'/place',lambda goal_handle: self.action_task_callback(goal_handle, 'place'),callback_group=self.group1),
         }
 
         #self.kcaremaster_action_server = ActionServer(self,SendStringData,'/approach',self.task_approach_callback,callback_group=self.group1)
@@ -202,8 +208,8 @@ class KcareMaster(Node):
         
         # 홈 위치 각도 설정
         request.angles = angle 
-        request.speed = 0.35  # 속도 설정
-        request.acc = 10.0    # 가속도 설정
+        request.speed = 0.7  # 속도 설정
+        request.acc = 20.0    # 가속도 설정
         request.mvtime = 0.0    # 이동 시간 설정
         request.wait = True    # 완료 대기 설정
         # 서비스 호출
@@ -227,8 +233,8 @@ class KcareMaster(Node):
         request = MoveCartesian.Request()
         # 홈 위치 각도 설정
         request.pose = pose 
-        request.speed = 50.0  # 속도 설정
-        request.acc = 500.0    # 가속도 설정
+        request.speed = 100.0  # 속도 설정
+        request.acc = 1000.0    # 가속도 설정
         request.mvtime = 0.0    # 이동 시간 설정
         request.wait = True    # 완료 대기 설정
         request.relative = relative
@@ -305,28 +311,6 @@ class KcareMaster(Node):
         future = self.service_clients['gripper_command'].call_async(request)
 
 
-
-    # def elevation_command(self,meter):
-    #     # Input value range 0.195 0.935 
-    #     lm_msg=LMCommand()
-    #     lm_msg.cmd_type="abs"
-    #     lm_msg.move=meter
-    #     self.topic_publisher['lm_command'].publish(lm_msg)
-    #     self.elevation_complete(meter)
-
-
-    # def elevation_complete(self,target_meter):
-    #     while True:
-    #         driff =abs(target_meter-self.lm_current_pose)
-    #         #self.get_logger().info(f'LM target: {target_meter}, LM state: {self.lm_current_pose}, LM driff: {driff}')
-
-    #         if driff<0.001:
-    #             break
-    #         time.sleep(0.1)
-    #     #self.get_logger().info(f'Elevation Complete Check state: {self.lm_state}')
-    #     self.get_logger().info(f'Elevation Movement Complete')
-
-
     def lm_state_callback(self, msg):
         if not self.topic_ready['lm_state']:
             self.get_logger().info("✅ /elevation/state 토픽 준비됨.")
@@ -364,7 +348,11 @@ class KcareMaster(Node):
             self.task_approach(rev_data)
         elif action_name == 'pick':
             self.get_logger().info('Received action pick')
-            self.task_pick()
+            self.task_pick(rev_data)
+        elif action_name == 'place':
+            self.get_logger().info('Received action place')
+            self.task_place(rev_data)
+
 
         feedback.status = "Processing complete"
         goal_handle.publish_feedback(feedback)
@@ -380,7 +368,7 @@ class KcareMaster(Node):
 
     def debug_approach(self,rev_data):
         self.call_elevation_command(0.2)
-        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
+        self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
         
         img_pose=rev_data['pose']
 
@@ -413,7 +401,7 @@ class KcareMaster(Node):
 
         self.call_gripper_command(1000,50)
         self.call_elevation_command(0.2)
-        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
+        self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
 
         mid_x = (img_pose[0]+img_pose[2])/2
         mid_y = (img_pose[1]+img_pose[3])/2
@@ -444,12 +432,50 @@ class KcareMaster(Node):
         self.get_logger().info(f'Calibration Movement Complete')
         #self.call_elevation_command(0.2)
 
-    def task_pick(self):
+    def task_pick(self,rev_data):
         #self.call_gripper_command(1000,50)
         transx_offset=200.0
         self.call_set_servo_move([self.trans_x-transx_offset,0.0,0.0,0.0,0.0,0.0],relative=True)
+        #self.call_gripper_command(0,50)
+        #time.sleep(2)
+        self.call_set_servo_move([0.0,0.0,50.0,0.0,0.0,0.0],relative=True)
         self.call_set_servo_move([-(self.trans_x-transx_offset)+50.0,0.0,0.0,0.0,0.0,0.0],relative=True)
-        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,-1.57,0.0])
+        self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
+        self.call_elevation_command(0.2)
+        
+
+    def task_place(self,rev_data):
+        img_pose=rev_data['pose']
+        mid_x = (img_pose[0]+img_pose[2])/2
+        mid_y = (img_pose[1]+img_pose[3])/2
+        obj_depth = img_pose[4]
+
+        cur_lift_position=copy.deepcopy(self.lm_current_pose)
+        cur_arm_robot_pose=copy.deepcopy(self.pose)
+        cur_angle_ry=copy.deepcopy(self.head_state[1])
+        cur_angle_rz=copy.deepcopy(self.head_state[0])
+
+        self.call_elevation_command(0.2)
+        self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
+        
+        self.trans_lift_position,self.trans_armrobot_XYZ=self.femto_calib.convert_femto_to_arm(mid_x,mid_y,obj_depth,#[x,y,z] mm 
+                                                                                cur_lift_position, # scalar (meter)
+                                                                                cur_arm_robot_pose, # x y z r p y
+                                                                                cur_angle_ry,# scalar
+                                                                                cur_angle_rz# scalar
+                                                                                )
+        
+        self.trans_x,self.trans_y,self.trans_z=self.trans_armrobot_XYZ
+        self.get_logger().info(f'Lift : {self.trans_lift_position},Trans X: {self.trans_x}, Trans Y: {self.trans_y}, Trans Z: {self.trans_z}')
+        elev_offset = 0.0
+        transy_offset = 40.0
+        self.call_elevation_command(self.trans_lift_position+elev_offset)
+        self.call_set_servo_move([0.0,self.trans_y-transy_offset,0.0,0.0,0.0,0.0],relative=True)
+
+        transx_offset=200.0
+        #self.call_set_servo_move([self.trans_x-transx_offset,0.0,0.0,0.0,0.0,0.0],relative=True)
+        #self.call_set_servo_move([-(self.trans_x-transx_offset)+50.0,0.0,0.0,0.0,0.0,0.0],relative=True)
+        self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
         self.call_elevation_command(0.2)
 
 
@@ -463,7 +489,6 @@ class KcareMaster(Node):
             self.get_logger().info("Spinning")
 
 
-
     def init_robot(self):
         self.call_gripper_command(1000,50)
 
@@ -472,9 +497,9 @@ class KcareMaster(Node):
         self.call_set_state(0)
 
         self.call_elevation_command(0.2)
-        self.call_set_servo_angle([1.57,0.0,0.0,0.0,0.0,0.0,0.0])
+        self.call_set_servo_angle([math.radians(90.0),0.0,0.0,0.0,0.0,0.0,0.0])
 
-        self.head_command(0.0,15.0)
+        self.head_command(0.0,20.0)
 
 
 def main(args=None):
