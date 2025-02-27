@@ -15,13 +15,11 @@ from rosinterfaces.action import SendStringData as SendData
 
 from  pyconnect.utils import str2dict, data_info, dict2str
 
-from femto2handCalib import calibration
+from vision_calibration import Head2BaseCalibration as headCalib
 import copy
 
 import time, threading
 import math
-
-
 
 
 
@@ -67,7 +65,9 @@ class KcareMaster(Node):
         self.lm_current_pose=0.0
         self.pose=[0.0,0.0,0.0,0.0,0.0,0.0]
         self.head_state=[0.0,0.0]
-        self.femto_calib=calibration()
+        self.femto_calib=headCalib()
+
+        self.obj_height=0.0
 
         self.topic_ready = {key: False for key in self.topic_subscriber.keys()}
 
@@ -398,7 +398,7 @@ class KcareMaster(Node):
 
     def task_approach(self,rev_data):
         img_pose=rev_data['pose']
-
+        
         self.call_gripper_command(1000,50)
         self.call_elevation_command(0.2)
         self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
@@ -412,7 +412,8 @@ class KcareMaster(Node):
         cur_angle_ry=copy.deepcopy(self.head_state[1])
         cur_angle_rz=copy.deepcopy(self.head_state[0])
         
-        
+        self.obj_height=self.femto_calib.convert_femto_object2Height(img_pose, [cur_angle_ry,cur_angle_rz])
+
         self.trans_lift_position,self.trans_armrobot_XYZ=self.femto_calib.convert_femto_to_arm(mid_x,mid_y,obj_depth,#[x,y,z] mm 
                                                                                 cur_lift_position, # scalar (meter)
                                                                                 cur_arm_robot_pose, # x y z r p y
@@ -424,7 +425,6 @@ class KcareMaster(Node):
         self.trans_x,self.trans_y,self.trans_z=self.trans_armrobot_XYZ
         self.get_logger().info(f'Lift : {self.trans_lift_position},Trans X: {self.trans_x}, Trans Y: {self.trans_y}, Trans Z: {self.trans_z}')
         
-
         elev_offset = 0.0
         transy_offset = 40.0
         self.call_elevation_command(self.trans_lift_position+elev_offset)
@@ -433,19 +433,23 @@ class KcareMaster(Node):
         #self.call_elevation_command(0.2)
 
     def task_pick(self,rev_data):
-        #self.call_gripper_command(1000,50)
+        self.call_gripper_command(1000,50)
         transx_offset=200.0
         self.call_set_servo_move([self.trans_x-transx_offset,0.0,0.0,0.0,0.0,0.0],relative=True)
-        #self.call_gripper_command(0,50)
-        #time.sleep(2)
+        self.call_gripper_command(0,50)
+        time.sleep(2)
         self.call_set_servo_move([0.0,0.0,50.0,0.0,0.0,0.0],relative=True)
         self.call_set_servo_move([-(self.trans_x-transx_offset)+50.0,0.0,0.0,0.0,0.0,0.0],relative=True)
         self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
         self.call_elevation_command(0.2)
         
+        
 
     def task_place(self,rev_data):
-        img_pose=rev_data['pose']
+        self.call_elevation_command(0.2)
+        self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
+
+        img_pose=rev_data['placepose']
         mid_x = (img_pose[0]+img_pose[2])/2
         mid_y = (img_pose[1]+img_pose[3])/2
         obj_depth = img_pose[4]
@@ -455,8 +459,7 @@ class KcareMaster(Node):
         cur_angle_ry=copy.deepcopy(self.head_state[1])
         cur_angle_rz=copy.deepcopy(self.head_state[0])
 
-        self.call_elevation_command(0.2)
-        self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
+
         
         self.trans_lift_position,self.trans_armrobot_XYZ=self.femto_calib.convert_femto_to_arm(mid_x,mid_y,obj_depth,#[x,y,z] mm 
                                                                                 cur_lift_position, # scalar (meter)
@@ -467,14 +470,16 @@ class KcareMaster(Node):
         
         self.trans_x,self.trans_y,self.trans_z=self.trans_armrobot_XYZ
         self.get_logger().info(f'Lift : {self.trans_lift_position},Trans X: {self.trans_x}, Trans Y: {self.trans_y}, Trans Z: {self.trans_z}')
-        elev_offset = 0.0
+        elev_offset = (self.obj_height/1000.0)+0.1
         transy_offset = 40.0
         self.call_elevation_command(self.trans_lift_position+elev_offset)
         self.call_set_servo_move([0.0,self.trans_y-transy_offset,0.0,0.0,0.0,0.0],relative=True)
-
         transx_offset=200.0
-        #self.call_set_servo_move([self.trans_x-transx_offset,0.0,0.0,0.0,0.0,0.0],relative=True)
-        #self.call_set_servo_move([-(self.trans_x-transx_offset)+50.0,0.0,0.0,0.0,0.0,0.0],relative=True)
+        self.call_set_servo_move([self.trans_x-transx_offset,0.0,0.0,0.0,0.0,0.0],relative=True)
+        self.call_set_servo_move([0.0,0.0,-self.obj_height,0.0,0.0,0.0],relative=True)
+        self.call_gripper_command(1000,50)
+        time.sleep(2)
+        self.call_set_servo_move([-(self.trans_x-transx_offset)+50.0,0.0,0.0,0.0,0.0,0.0],relative=True)
         self.call_set_servo_angle([math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0])
         self.call_elevation_command(0.2)
 
@@ -510,7 +515,7 @@ def main(args=None):
     #spin_thread.daemon = True  # 메인 프로그램 종료 시 스레드도 종료되도록 설정
     #spin_thread.start()
     
-    executor = MultiThreadedExecutor(num_threads=3)
+    executor = MultiThreadedExecutor(num_threads=4)
     executor.add_node(master_node)
 
 

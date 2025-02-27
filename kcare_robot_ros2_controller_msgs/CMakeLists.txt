@@ -32,6 +32,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GripperState.msg"
   "srv/GripperCommand.srv"
   "srv/ElevationCommand.srv"
+  "srv/HeadPoseCommand.srv"
   DEPENDENCIES std_msgs
  )
 
