@@ -93,7 +93,7 @@ class HeadControlNode(Node):
         self.dxl.position_control(target_rz, target_ry)
 
         # ✅ 목표 위치 도달 감지 (허용 오차 범위 설정)
-        tolerance = 2  # 2도 이내면 도달한 것으로 간주 (조정 가능)
+        tolerance = 0.6  # 2도 이내면 도달한 것으로 간주 (조정 가능)
         timeout = 5.0  # 최대 대기 시간 (초)
         start_time = time.time()
 

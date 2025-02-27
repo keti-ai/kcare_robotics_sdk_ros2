@@ -1,12 +1,16 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import ReliabilityPolicy, QoSProfile
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 
 from pymodbus.client import ModbusSerialClient
 import time
 
 from kcare_robot_ros2_controller_msgs.msg import GripperState
 from kcare_robot_ros2_controller_msgs.srv import GripperCommand
+
+
 
 class GripperControllerWrapper:
     def __init__(self, port, baud):
@@ -71,6 +75,8 @@ class GripperControllerWrapper:
         gripper_state.grp_closed = bool(registers.registers[0] & 0x40)
         gripper_state.motor_fault = bool(registers.registers[0] & 0x80)
 
+        print(registers.registers[4])
+
         return gripper_state
 
 
@@ -79,16 +85,19 @@ class GripperNode(Node):
     def __init__(self):
         super().__init__('gripper_subscriber')
 
+        self.group1 = MutuallyExclusiveCallbackGroup()
+        self.group2 = MutuallyExclusiveCallbackGroup()
+
         self.gripper_client = GripperControllerWrapper("/dev/ttyGripper", 115200)
         self.gripper_client.connect_grip()
         self.gripper_client.gripper_initialize()
 
-        self.gripper_service= self.create_service(GripperCommand,'gripper/command',self.set_gripperpose_callback)
+        self.gripper_service= self.create_service(GripperCommand,'gripper/command',self.set_gripperpose_callback,callback_group=self.group1)
 
         self.publisher = self.create_publisher(GripperState,'gripper/state',10)
 
         timer_period = 0.1
-        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.timer = self.create_timer(timer_period, self.timer_callback,callback_group=self.group2)
         
 
     def set_gripperpose_callback(self,request,response):
@@ -111,16 +120,21 @@ class GripperNode(Node):
             self.publisher.publish(gripper_state)
             #self.get_logger().info(f"Published Gripper State: {gripper_state}")
 
-
 def main(args=None):
     rclpy.init(args=args)
+    node = GripperNode()
 
-    subscriber_ = GripperNode()
-    rclpy.spin(subscriber_)
+    executor = MultiThreadedExecutor(num_threads=3)
+    executor.add_node(node)
 
-    subscriber_.destroy_node()
-    rclpy.shutdown()
-
+    try:
+        node.get_logger().info("🚀 GripperControl running with MultiThreadedExecutor")
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
