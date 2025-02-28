@@ -75,8 +75,6 @@ class GripperControllerWrapper:
         gripper_state.grp_closed = bool(registers.registers[0] & 0x40)
         gripper_state.motor_fault = bool(registers.registers[0] & 0x80)
 
-        print(registers.registers[4])
-
         return gripper_state
 
 
