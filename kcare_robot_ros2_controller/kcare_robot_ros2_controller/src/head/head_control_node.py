@@ -92,6 +92,11 @@ class HeadControlNode(Node):
         # ✅ 모터 이동 명령 실행
         self.dxl.position_control(target_rz, target_ry)
 
+        # 비동기 완료 처리
+        if not request.wait:
+            response.successed=True
+            return response
+
         # ✅ 목표 위치 도달 감지 (허용 오차 범위 설정)
         tolerance = 1.5  # 2도 이내면 도달한 것으로 간주 (조정 가능)
         timeout = 5.0  # 최대 대기 시간 (초)

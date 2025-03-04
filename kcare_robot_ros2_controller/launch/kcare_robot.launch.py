@@ -18,42 +18,15 @@ def generate_launch_description():
     
     robot_ip_arg = LaunchConfiguration('robot_ip',default='192.168.1.245')
 
-    #femto_driver_launch_file = os.path.join(
-    #    get_package_share_directory('orbbec_camera'),
-    #    'launch',
-    #    'femto_bolt.launch.py',
-    #)
-    
-    # hand_driver_launch_file = os.path.join(
-    #     get_package_share_directory('orbbec_camera'),
-    #     'launch',
-    #     'dabai_dcw2.launch.py',
-    # )
-
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'robot_ip',
-            default_value='192.168.1.245',  # 기본값 설정
-            description='IP address of the robot'
-        ),
+        # Robot IP 설정 인자
+        DeclareLaunchArgument('robot_ip',default_value='192.168.1.245',description='IP address of the robot'),
 
         # xarm7_driver.launch.py 포함
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(xarm_driver_launch_file),
             launch_arguments={'robot_ip': robot_ip_arg}.items()
         ),
-
-
-
-        #driver.launch.py 포함
-        #IncludeLaunchDescription(
-        #    PythonLaunchDescriptionSource(femto_driver_launch_file),
-        #),
-       
-        # gemini_ew launch 포함
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(hand_driver_launch_file),
-        # ),
 
         # Joystick control node
         Node(

@@ -1,4 +1,5 @@
 float32 rz
 float32 ry
+bool wait
 ---
 bool successed

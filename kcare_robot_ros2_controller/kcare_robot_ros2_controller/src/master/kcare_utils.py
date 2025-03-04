@@ -2,13 +2,13 @@ import rclpy
 import rclpy.executors
 from rclpy.node import Node
 
-from sensor_msgs.msg import Image,CameraInfo
 from xarm_msgs.msg import RobotMsg
 from xarm_msgs.srv import MoveJoint, MoveCartesian, SetInt16, SetInt16ById, Call
 from kcare_robot_ros2_controller_msgs.msg import HeadState, LMState
 from kcare_robot_ros2_controller_msgs.srv import ElevationCommand, GripperCommand, HeadPoseCommand
 
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+
 
 import time, math, copy
 
@@ -188,7 +188,7 @@ class RobotUtils:
         else:
             self.node.get_logger().error('Failed to call service /xarm/clean_error')
 
-    def call_set_servo_angle(self, angle):
+    def call_set_servo_angle(self, angle,wait=True):
         # 홈 위치로 서보 각도 설정 서비스 호출 예시
         request = MoveJoint.Request()
         
@@ -197,7 +197,7 @@ class RobotUtils:
         request.speed = 0.7  # 속도 설정
         request.acc = 20.0    # 가속도 설정
         request.mvtime = 0.0    # 이동 시간 설정
-        request.wait = True    # 완료 대기 설정
+        request.wait = wait    # 완료 대기 설정
         # 서비스 호출
         future = self.service_clients['set_servo_angle'].call_async(request)
         
@@ -214,7 +214,7 @@ class RobotUtils:
             self.node.get_logger().error('Failed to call service /xarm/set_servo_angle')
 
 
-    def call_set_servo_move(self, pose, relative=False,mvtype=0):
+    def call_set_servo_move(self, pose, relative=False,mvtype=0,wait=True):
         # 홈 위치로 서보 각도 설정 서비스 호출 예시
         request = MoveCartesian.Request()
         # 홈 위치 각도 설정
@@ -222,7 +222,7 @@ class RobotUtils:
         request.speed = 100.0  # 속도 설정
         request.acc = 1000.0    # 가속도 설정
         request.mvtime = 0.0    # 이동 시간 설정
-        request.wait = True    # 완료 대기 설정
+        request.wait = wait    # 완료 대기 설정
         request.relative = relative
         request.motion_type = mvtype
 
@@ -241,10 +241,10 @@ class RobotUtils:
         else:
             self.node.get_logger().error('Failed to call service /xarm/set_position')
         
-    def call_elevation_command(self,meter):
+    def call_elevation_command(self,meter,wait=True):
             request=ElevationCommand.Request()
             request.move=meter
-            request.until_complete=True
+            request.until_complete=wait
 
             future = self.service_clients['elevation_command'].call_async(request)
 
@@ -279,10 +279,11 @@ class RobotUtils:
         else:
             self.node.get_logger().error('Failed to call service /gripper/command')
 
-    def call_head_command(self,head_pose):
+    def call_head_command(self,head_pose,wait=True):
         request=HeadPoseCommand.Request()
         request.rz = head_pose[0]
         request.ry = head_pose[1]
+        request.wait = wait
 
         future = self.service_clients['head_command'].call_async(request)
 
@@ -308,3 +309,7 @@ class RobotUtils:
         cur_arm_robot_joint=copy.deepcopy(self.rbstate.angle)
         return {'pose':cur_arm_robot_pose,
                 'joint':cur_arm_robot_joint}
+    
+    def get_head_pose(self):
+        cur_head_pose=copy.deepcopy(self.rbstate.head_state)
+        return cur_head_pose
