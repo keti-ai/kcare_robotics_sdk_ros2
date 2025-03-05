@@ -13,37 +13,43 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 import time, math, copy
 
 class RobotState:
-    angle: list = [math.radians(90.0),0.0,0.0,0.0,0.0,0.0,0.0] 
-    pose: list = [206.111, 6.175, 118.9, 3.14, 0.0, 0.0]
-    lm_pose: float = 0.2
-    head_state: float = [0.0, 0.0]
+    angle: list = [math.radians(90.0),0.0,0.0,0.0,0.0,0.0,0.0] # 로봇 현재 조인트값 저장 변수
+    pose: list = [206.111, 6.175, 118.9, 3.14, 0.0, 0.0]    #로봇 현재 베이스좌표값 저장 변수
+    rb_state: int = 0   # 로봇 스테이트값 저장변수
+    rb_mode: int = 0    # 로봇 모드값 저장변수
+    rb_error: int = 0   # 로봇 에러상태 저장변수
+    lm_pose: float = 0.2    # 리프트 모듈 높이 저장 변수
+    head_state: float = [0.0, 0.0]  # 팬틸트 각도 저장 변수
 
 class RobotParam:
-    spin_time: float = 0.05
-    elev_home: float = 0.2
-    arm_home: list = [math.radians(90.0),0.0,0.0,0.0,0.0,0.0,0.0]
-    arm_ready: list = [math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0]
-    tool_radius: float = 50.0
-    tool_length: float = 200.0
-    grip_open: int = 1000
-    grip_close: int = 0
-    grip_max_force: int = 100
-    grip_min_force: int = 50
+    spin_time: float = 0.05     # ROS2 루프문 대기시간
+    elev_home: float = 0.2      # 리프트 홈위치
+    arm_home: list = [math.radians(90.0),0.0,0.0,0.0,0.0,0.0,0.0]   # 조인트좌표계 로봇 홈자세
+    arm_ready: list = [math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0]    #조인트좌표계 로봇 준비자세
+    j_arm_speed: float = 0.7    # 조인트좌표계 로봇 속도
+    j_arm_accel: float = 20.0   # 조인트좌표계 로봇 가속도
+    l_arm_speed: float = 100.0      # 베이스좌표계 로봇 속도
+    l_arm_accel: float = 1000.0     # 베이스좌표계 로봇 가속도
+    tool_radius: float = 50.0       # 로봇 툴 반지름
+    tool_length: float = 200.0      # 로봇 툴팁 길이
+    grip_open: int = 1000       # 그리퍼 오픈 상태 퍼센트
+    grip_close: int = 0     #그리퍼 닫음 상태 퍼샌트
+    grip_max_force: int = 100   # 그리퍼 최대힘
+    grip_min_force: int = 50    # 그리퍼 최소힘
 
 
 
 class RobotUtils:
     def __init__(self, node:Node):
-        self.node = node
+        self.node = node    # 상위 노드에서 노드정보 상속
         self.rbstate=RobotState()
         
         self.topic_sub_group = MutuallyExclusiveCallbackGroup()
-        #self.act_callback_group = MutuallyExclusiveCallbackGroup()
 
         SERVICE_CLIENTS ={
             'set_servo_angle' : ('/xarm/set_servo_angle',MoveJoint),
             'set_servo_move': ('/xarm/set_position', MoveCartesian),
-            'motion_enable': ('/xarm/motion_enable', SetInt16),
+            'motion_enable': ('/xarm/motion_enable', SetInt16ById),
             'set_mode': ('/xarm/set_mode', SetInt16),
             'set_state': ('/xarm/set_state', SetInt16),
             'clean_error': ('/xarm/clean_error', Call),
@@ -78,8 +84,12 @@ class RobotUtils:
         # self.get_logger().info(f'Robot Pose: "%s"' % str(msg.pose))
         
         #TODO 조인트 및 포즈값 인덱스
+
         self.rbstate.angle=msg.angle
         self.rbstate.pose=msg.pose
+        self.rbstate.rb_mode=msg.mode
+        self.rbstate.rb_error=msg.err
+        self.rbstate.rb_state=msg.state
         
         #self.node.get_logger().info(f"rb_pose_callback node.angle: {self.rbstate.angle}")
         # self.get_logger().info(f"rb_pose_callback node.pose: {self.state.pose}")
@@ -92,7 +102,7 @@ class RobotUtils:
         self.rbstate.head_state=[msg.current_rz,msg.current_ry]
         #self.node.get_logger().info(f"head_pose callback: {self.rbstate.head_state}")
 
-    def call_set_mode(self, mode):
+    def call_set_mode(self, mode=0):
         # 모드 정의 관련 서비스 호출 예시
         '''
         Mode 0 : xArm controller (Position) mode.
@@ -123,7 +133,7 @@ class RobotUtils:
         else:
             self.node.get_logger().error('Failed to call service /xarm/set_mode')
     
-    def call_set_state(self, state):
+    def call_set_state(self, state=0):
         # 로봇 스테이트 관련 서비스 호출 예시
         '''
         state:
@@ -149,7 +159,7 @@ class RobotUtils:
         else:
             self.node.get_logger().error('Failed to call service /xarm/set_state')
 
-    def call_motion_enable(self, id, data):
+    def call_motion_enable(self, id=8, data=1):
         # 로봇 토크 활성화
         request = SetInt16ById.Request()
         request.id = id
@@ -194,8 +204,8 @@ class RobotUtils:
         
         # 홈 위치 각도 설정
         request.angles = angle 
-        request.speed = 0.7  # 속도 설정
-        request.acc = 20.0    # 가속도 설정
+        request.speed = RobotParam.j_arm_speed  # 속도 설정
+        request.acc = RobotParam.j_arm_accel    # 가속도 설정
         request.mvtime = 0.0    # 이동 시간 설정
         request.wait = wait    # 완료 대기 설정
         # 서비스 호출
@@ -219,8 +229,8 @@ class RobotUtils:
         request = MoveCartesian.Request()
         # 홈 위치 각도 설정
         request.pose = pose 
-        request.speed = 100.0  # 속도 설정
-        request.acc = 1000.0    # 가속도 설정
+        request.speed = RobotParam.l_arm_speed  # 속도 설정
+        request.acc = RobotParam.l_arm_accel    # 가속도 설정
         request.mvtime = 0.0    # 이동 시간 설정
         request.wait = wait    # 완료 대기 설정
         request.relative = relative
@@ -241,6 +251,10 @@ class RobotUtils:
         else:
             self.node.get_logger().error('Failed to call service /xarm/set_position')
         
+    def call_set_relative_robot_pose(self,dx=0.0,dy=0.0,dz=0.0,rdx=0.0,rdy=0.0,rdz=0.0,wait=True):
+        target_pose=[dx,dy,dz,rdx,rdy,rdz]
+        self.call_set_servo_move(target_pose,relative=True,wait=wait)
+
     def call_elevation_command(self,meter,wait=True):
             request=ElevationCommand.Request()
             request.move=meter
@@ -310,6 +324,18 @@ class RobotUtils:
         return {'pose':cur_arm_robot_pose,
                 'joint':cur_arm_robot_joint}
     
+    def get_robot_state(self):
+        err=copy.deepcopy(self.rbstate.rb_error)
+        mode=copy.deepcopy(self.rbstate.rb_mode)
+        state=copy.deepcopy(self.rbstate.rb_state)
+        return {
+            'err':err,
+            'mode':mode,
+            'state':state
+        }
+
     def get_head_pose(self):
         cur_head_pose=copy.deepcopy(self.rbstate.head_state)
         return cur_head_pose
+    
+    
