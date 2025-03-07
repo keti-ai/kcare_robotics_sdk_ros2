@@ -30,6 +30,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/HeadGoHomeRequest.msg"
   "msg/GripperCommand.msg"
   "msg/GripperState.msg"
+  "msg/RemoteCommand.msg"
   "srv/GripperCommand.srv"
   "srv/ElevationCommand.srv"
   "srv/HeadPoseCommand.srv"

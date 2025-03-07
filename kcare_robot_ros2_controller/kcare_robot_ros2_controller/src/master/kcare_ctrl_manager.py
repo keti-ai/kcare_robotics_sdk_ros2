@@ -1,6 +1,7 @@
 from rclpy.executors import MultiThreadedExecutor
 
 from kcare_robot_ros2_controller.src.master.kcare_utils import *
+from kcare_robot_ros2_controller_msgs.msg import RemoteCommand
 
 
 import time
@@ -13,7 +14,14 @@ class KcareCtrlManager(Node):
         self.rbutils=RobotUtils(self)
         self.act_callback_group = MutuallyExclusiveCallbackGroup()
         self.srv_callback_group = MutuallyExclusiveCallbackGroup()
+        self.sub_callback_group = MutuallyExclusiveCallbackGroup()
 
+        TOPIC_SUBS = {
+            'remote_controller': ('/kcare/remote_command', RemoteCommand,self.remote_control_callback),
+        }
+
+    def remote_control_callback(self,msg):
+        pass
 
 def main(args=None):
     rclpy.init(args=args)
