@@ -41,9 +41,6 @@ class KcareMaster(Node):
         #     self.get_logger().info(f"Action Server created: {action_tag} -> {action_name}")
 
         SERVICE_SERVER ={
-            'move_head',
-            'move',
-            'approach',
             'pick',
             'place',
         }
@@ -77,8 +74,10 @@ class KcareMaster(Node):
     def srv_callback(self,request,response):
         msg = request.req
         print(msg)
+        response.ret="succed"
+        return response
 
-    def rb_init(self):
+    #def rb_init(self):
         #self.rbutils.call_elevation_command(RobotParam.elev_home)
         # 로봇 전원 On
         #self.rbutils.call_motion_enable(8, 1)
@@ -89,8 +88,6 @@ class KcareMaster(Node):
         # 조인트 기반 홈자세 이동
         #self.rbutils.call_set_servo_angle(RobotParam.arm_home)
 
-        self.rbutils.call_head_command([0.0,-20.0])
-        self.rbutils.call_head_command([0.0,0.0])
 
 
 def main(args=None):
@@ -100,7 +97,7 @@ def main(args=None):
     executor = MultiThreadedExecutor(num_threads=3)
     executor.add_node(master_node)
     # 노드내 함수 비동기 실행.초기화 함수등 실행
-    executor.create_task(master_node.rb_init)
+    #executor.create_task(master_node.rb_init)
     try:
         master_node.get_logger().info("✅ Master Server is running...")
         executor.spin()  # ✅ 멀티스레드 실행

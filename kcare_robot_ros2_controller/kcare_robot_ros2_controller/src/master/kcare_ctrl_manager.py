@@ -20,8 +20,15 @@ class KcareCtrlManager(Node):
             'remote_controller': ('/kcare/remote_command', RemoteCommand,self.remote_control_callback),
         }
 
+        self.topic_subs = {}
+
+        for topic_tag, (topic_name, topic_type,topic_callback_fun) in TOPIC_SUBS.items():
+            self.topic_subs[topic_tag] = self.create_subscription(topic_type,topic_name,topic_callback_fun,10,callback_group=self.sub_callback_group)
+            self.get_logger().info(f"Subscriber created: {topic_tag} -> {topic_name} with {topic_callback_fun}")
+
+
     def remote_control_callback(self,msg):
-        pass
+        self.get_logger().info(f'{msg}')
 
 def main(args=None):
     rclpy.init(args=args)
@@ -30,7 +37,7 @@ def main(args=None):
     executor = MultiThreadedExecutor(num_threads=3)
     executor.add_node(master_node)
     # 노드내 함수 비동기 실행.초기화 함수등 실행
-    executor.create_task(master_node.rb_init)
+    #executor.create_task(master_node.rb_init)
     try:
         master_node.get_logger().info("✅ Master Server is running...")
         executor.spin()  # ✅ 멀티스레드 실행

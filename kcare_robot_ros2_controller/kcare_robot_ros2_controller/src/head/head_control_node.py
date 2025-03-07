@@ -83,7 +83,8 @@ class HeadControlNode(Node):
 
     def topic_callback_go_home(self, msg):
         if msg:
-            self.dxl.go_home()
+            #self.dxl.go_home()
+            self.update_target_pose(0.0,0.0)
 
 
     def service_callback_pose(self, request, response):

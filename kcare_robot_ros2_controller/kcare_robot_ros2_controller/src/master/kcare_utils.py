@@ -211,6 +211,9 @@ class RobotUtils:
         # 서비스 호출
         future = self.service_clients['set_servo_angle'].call_async(request)
         
+        if not wait:
+            return
+
         # 비동기 호출의 결과를 기다림
         while not future.done():
             # 여기서는 별도로 spin_once가 이미 다른 스레드에서 처리되므로
@@ -239,6 +242,9 @@ class RobotUtils:
         # 서비스 호출
         future = self.service_clients['set_servo_move'].call_async(request)
         
+        if not wait:
+            return
+
         # 비동기 호출의 결과를 기다림
         while not future.done():
             # 여기서는 별도로 spin_once가 이미 다른 스레드에서 처리되므로
@@ -256,23 +262,26 @@ class RobotUtils:
         self.call_set_servo_move(target_pose,relative=True,wait=wait)
 
     def call_elevation_command(self,meter,wait=True):
-            request=ElevationCommand.Request()
-            request.move=meter
-            request.until_complete=wait
+        request=ElevationCommand.Request()
+        request.move=meter
+        request.until_complete=wait
 
-            future = self.service_clients['elevation_command'].call_async(request)
+        future = self.service_clients['elevation_command'].call_async(request)
 
-            # 비동기 호출의 결과를 기다림
-            while not future.done():
-                # 여기서는 별도로 spin_once가 이미 다른 스레드에서 처리되므로
-                # 추가적으로 spin_once(self)를 호출하지 않습니다.
-                time.sleep(RobotParam.spin_time)
+        if not wait:
+            return
 
-            if future.result() is not None:
-                response = future.result()
-                self.node.get_logger().info(f'Servo Move Response: {response.successed}')
-            else:
-                self.node.get_logger().error('Failed to call service /elevation/command')
+        # 비동기 호출의 결과를 기다림
+        while not future.done():
+            # 여기서는 별도로 spin_once가 이미 다른 스레드에서 처리되므로
+            # 추가적으로 spin_once(self)를 호출하지 않습니다.
+            time.sleep(RobotParam.spin_time)
+
+        if future.result() is not None:
+            response = future.result()
+            self.node.get_logger().info(f'Servo Move Response: {response.successed}')
+        else:
+            self.node.get_logger().error('Failed to call service /elevation/command')
 
     def call_gripper_command(self,pose,force):
         request=GripperCommand.Request()
@@ -280,6 +289,7 @@ class RobotUtils:
         request.force=force
 
         future = self.service_clients['gripper_command'].call_async(request)
+
 
         # 비동기 호출의 결과를 기다림
         while not future.done():
@@ -301,6 +311,8 @@ class RobotUtils:
 
         future = self.service_clients['head_command'].call_async(request)
 
+        if not wait:
+            return
         # 비동기 호출의 결과를 기다림
         while not future.done():
             # 여기서는 별도로 spin_once가 이미 다른 스레드에서 처리되므로

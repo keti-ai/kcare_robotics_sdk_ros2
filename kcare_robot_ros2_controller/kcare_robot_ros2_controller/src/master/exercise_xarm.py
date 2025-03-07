@@ -15,12 +15,16 @@ class ExerciseNode(Node):
         # 로봇 스테이트 셋
         self.rbutils.call_set_state(0)
         # 조인트 기반 홈자세 이동
-        self.rbutils.call_set_servo_angle(RobotParam.arm_home)
+        #self.rbutils.call_set_servo_angle(RobotParam.arm_home,wait=True)
         # 조인트 기반 픽업자세 이동
-        self.rbutils.call_set_servo_angle(RobotParam.arm_ready)
+        #self.rbutils.call_set_servo_angle(RobotParam.arm_ready,wait=True)
+
+        self.rbutils.call_elevation_command(0.2,wait=False)
+        self.rbutils.call_elevation_command(0.3,wait=False)
+        self.rbutils.call_elevation_command(0.4,wait=False)
         # 베이스좌표계 기반 상대 움직임
-        self.rbutils.call_set_relative_robot_pose(dx=30.0)
-        self.rbutils.call_set_relative_robot_pose(dy=30.0)
+        #self.rbutils.call_set_relative_robot_pose(dx=30.0)
+        #self.rbutils.call_set_relative_robot_pose(dy=30.0)
 
 
 def main(args=None):
