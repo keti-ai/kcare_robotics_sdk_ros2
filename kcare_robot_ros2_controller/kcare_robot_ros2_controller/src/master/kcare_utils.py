@@ -26,12 +26,12 @@ class RobotParam:
     elev_home: float = 0.2      # 리프트 홈위치
     arm_home: list = [math.radians(90.0),0.0,0.0,0.0,0.0,0.0,0.0]   # 조인트좌표계 로봇 홈자세
     arm_ready: list = [math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0]    #조인트좌표계 로봇 준비자세
-    j_arm_speed: float = 0.7    # 조인트좌표계 로봇 속도
-    j_arm_accel: float = 20.0   # 조인트좌표계 로봇 가속도
+    j_arm_speed: float = 0.35    # 조인트좌표계 로봇 속도
+    j_arm_accel: float = 10.0   # 조인트좌표계 로봇 가속도
     l_arm_speed: float = 100.0      # 베이스좌표계 로봇 속도
     l_arm_accel: float = 1000.0     # 베이스좌표계 로봇 가속도
     tool_radius: float = 50.0       # 로봇 툴 반지름
-    tool_length: float = 200.0      # 로봇 툴팁 길이
+    tool_length: float = 230.0      # 로봇 툴팁 길이
     grip_open: int = 1000       # 그리퍼 오픈 상태 퍼센트
     grip_close: int = 0     #그리퍼 닫음 상태 퍼샌트
     grip_max_force: int = 100   # 그리퍼 최대힘
@@ -283,7 +283,7 @@ class RobotUtils:
         else:
             self.node.get_logger().error('Failed to call service /elevation/command')
 
-    def call_gripper_command(self,pose,force):
+    def call_gripper_command(self,pose,force=RobotParam.grip_min_force):
         request=GripperCommand.Request()
         request.pose=pose
         request.force=force
