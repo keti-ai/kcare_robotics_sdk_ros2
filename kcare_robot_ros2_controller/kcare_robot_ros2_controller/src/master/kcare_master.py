@@ -142,6 +142,7 @@ class KcareMaster(Node):
         transy_offset = 40.0
         self.rbutils.call_set_relative_robot_pose(dy=self.trans_y-transy_offset)
         self.rbutils.call_set_relative_robot_pose(dx=self.trans_x-RobotParam.tool_length)
+        self.rbutils.call_set_relative_robot_pose(dz=-30.0)
         self.rbutils.call_gripper_command(RobotParam.grip_open)
         time.sleep(2)
 
@@ -168,7 +169,7 @@ class KcareMaster(Node):
         #조인트 기반 홈자세 이동
         self.rbutils.call_set_servo_angle(RobotParam.arm_home)
         self.rbutils.call_elevation_command(RobotParam.elev_home)
-        self.rbutils.call_head_command([0.0, -30.0])
+        self.rbutils.call_head_command([0.0, -20.0])
 
 
 
