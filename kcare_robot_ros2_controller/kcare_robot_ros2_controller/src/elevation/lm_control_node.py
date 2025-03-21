@@ -30,8 +30,8 @@ class LMControllerWrapper:
         self.limit_step = (51200, 3840000)
         self.current_step = 0  # unit: Step
         self.target_step = 51200  # unit: Step
-        #self.velocity_step = 204800
-        self.velocity_step = 307200
+        self.velocity_step = 204800
+        #self.velocity_step = 307200
         
         self.state = False
 

@@ -93,7 +93,7 @@ class KcareMaster(Node):
         self.rbutils.call_set_relative_robot_pose(dy=self.trans_y-transy_offset)
         self.get_logger().info(f'Calibration Movement Complete')
 
-        self.rbutils.call_set_relative_robot_pose(dx=self.trans_x-RobotParam.tool_length)
+        self.rbutils.call_set_relative_robot_pose(dx=self.trans_x-RobotParam.tool_length,dz=-10.0)
 
         self.rbutils.call_gripper_command(RobotParam.grip_close)
 
@@ -108,6 +108,22 @@ class KcareMaster(Node):
 
         rev_data.update({'isdone': True})
 
+        response.ret = dict2str(rev_data)
+        return response
+
+    def skill_place_callback_backup(self,request,response):
+        self.get_logger().info(f"Place Skill Processing")
+        rev_data = str2dict(request.req)
+
+        self.rbutils.call_set_servo_angle(RobotParam.arm_giving)
+        #self.rbutils.call_gripper_command(RobotParam.grip_open)
+        #time.sleep(2)
+
+        #self.rbutils.call_set_servo_angle(RobotParam.arm_ready)
+        #self.rbutils.call_elevation_command(0.5)
+
+
+        rev_data.update({'isdone': True})
         response.ret = dict2str(rev_data)
         return response
 
@@ -168,6 +184,8 @@ class KcareMaster(Node):
         self.rbutils.call_set_state(0)
         #조인트 기반 홈자세 이동
         self.rbutils.call_set_servo_angle(RobotParam.arm_home)
+        #self.rbutils.call_set_servo_angle(RobotParam.arm_ready)
+        #self.rbutils.call_set_servo_angle(RobotParam.arm_giving)
         self.rbutils.call_elevation_command(RobotParam.elev_home)
         self.rbutils.call_head_command([0.0, -20.0])
 

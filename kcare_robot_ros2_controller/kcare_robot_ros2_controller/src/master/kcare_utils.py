@@ -26,7 +26,8 @@ class RobotParam:
     elev_home: float = 0.2      # 리프트 홈위치
     arm_home: list = [math.radians(90.0),0.0,0.0,0.0,0.0,0.0,0.0]   # 조인트좌표계 로봇 홈자세
     arm_ready: list = [math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0]    #조인트좌표계 로봇 준비자세
-    j_arm_speed: float = 0.35    # 조인트좌표계 로봇 속도
+    arm_giving: list = [math.radians(130.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0]
+    j_arm_speed: float = 0.6    # 조인트좌표계 로봇 속도
     j_arm_accel: float = 10.0   # 조인트좌표계 로봇 가속도
     l_arm_speed: float = 200.0      # 베이스좌표계 로봇 속도
     l_arm_accel: float = 1000.0     # 베이스좌표계 로봇 가속도
