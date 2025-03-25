@@ -16,7 +16,7 @@ from threading import Lock
 class LMControlNode(Node):
     def __init__(self):
         super().__init__('lm_control_node')
-        self.lm_client = MD485DriverWrapper("/dev/ttyACM0", 19200)
+        self.lm_client = MD485DriverWrapper("/dev/ttyLM", 19200)
         self.lm_client.connect_lm()
         self.cmd_lock = Lock()
 
