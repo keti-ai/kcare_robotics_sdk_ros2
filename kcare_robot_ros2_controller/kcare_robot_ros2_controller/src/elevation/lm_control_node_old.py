@@ -30,8 +30,8 @@ class LMControllerWrapper:
         self.limit_step = (51200, 3840000)
         self.current_step = 0  # unit: Step
         self.target_step = 51200  # unit: Step
-        #self.velocity_step = 204800
-        self.velocity_step = 307200
+        self.velocity_step = 204800
+        #self.velocity_step = 307200
         
         self.state = False
 
@@ -209,13 +209,15 @@ class LMControlNode(Node):
             if not self.lm_client.stopped:
                 self.count_brk=self.count_brk+1
                 if self.count_brk > 3:
-                    self.lm_client.set_brake(True)
+                    pass
+                    #self.lm_client.set_brake(True)
                     #time.sleep(2)
             else:
                 self.count_brk = 0
         else:
             if self.lm_client.stopped:
-                self.lm_client.set_brake(False)
+                pass
+                #self.lm_client.set_brake(False)
                 #time.sleep(2)
             self.lm_client.move(self.lm_client.target_step)
 
