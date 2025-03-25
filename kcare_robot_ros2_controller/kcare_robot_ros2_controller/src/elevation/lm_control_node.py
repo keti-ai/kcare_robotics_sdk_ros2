@@ -28,15 +28,15 @@ class LMControlNode(Node):
         self.input_grp = MutuallyExclusiveCallbackGroup()
         self.timer_grp = MutuallyExclusiveCallbackGroup()
 
-        self.srv = self.create_service(ElevationCommand,'debug/elevation/set_position',self.set_elevation_callback, callback_group=self.input_grp)
+        self.srv = self.create_service(ElevationCommand,'elevation/set_position',self.set_elevation_callback, callback_group=self.input_grp)
 
         self.subscriber = self.create_subscription(LMCommand,
-                                                   'debug/elevation/command',
+                                                   'elevation/command',
                                                    self.topic_callback,
                                                    10,callback_group=self.input_grp)
 
         self.publisher = self.create_publisher(LMState,
-                                               'debug/elevation/state',
+                                               'elevation/state',
                                                10)
         
         timer_period = 0.1
@@ -90,7 +90,7 @@ class LMControlNode(Node):
         with self.cmd_lock:
             cur_pose = self.lm_client.count_to_mm(self.lm_client.read_monitor()[2]) + self.offset_position
             tar_pose = self.lm_client.count_to_mm(self.lm_client.read_target_position()) + self.offset_position
-            self.get_logger().info(f"Read normally")
+            #self.get_logger().info(f"Read normally")
 
         pub_msg = LMState()
         pub_msg.state = True
