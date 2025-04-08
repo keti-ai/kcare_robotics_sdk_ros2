@@ -23,7 +23,7 @@ class RobotState:
 
 class RobotParam:
     spin_time: float = 0.05     # ROS2 루프문 대기시간
-    elev_home: float = 0.2      # 리프트 홈위치
+    elev_home: float = 200.0      # 리프트 홈위치
     arm_home: list = [math.radians(90.0),0.0,0.0,0.0,0.0,0.0,0.0]   # 조인트좌표계 로봇 홈자세
     arm_ready: list = [math.radians(90.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0]    #조인트좌표계 로봇 준비자세
     arm_giving: list = [math.radians(130.0),math.radians(15.0),0.0,math.radians(15.0),0.0,math.radians(-90.0),0.0]
@@ -103,7 +103,7 @@ class RobotUtils:
         self.rbstate.head_state=[msg.current_rz,msg.current_ry]
         #self.node.get_logger().info(f"head_pose callback: {self.rbstate.head_state}")
 
-    def call_set_mode(self, mode=0):
+    def call_set_mode(self, mode=0, wait=True):
         # 모드 정의 관련 서비스 호출 예시
         '''
         Mode 0 : xArm controller (Position) mode.
@@ -120,6 +120,9 @@ class RobotUtils:
 
         # 서비스 호출
         future = self.service_clients['set_mode'].call_async(request)
+        
+        if not wait:
+            return
         
         # 비동기 호출의 결과를 기다림
         while not future.done():
@@ -199,14 +202,14 @@ class RobotUtils:
         else:
             self.node.get_logger().error('Failed to call service /xarm/clean_error')
 
-    def call_set_servo_angle(self, angle,wait=True):
+    def call_set_servo_angle(self, angle,speed = RobotParam.j_arm_speed, acc=RobotParam.j_arm_accel, wait=True):
         # 홈 위치로 서보 각도 설정 서비스 호출 예시
         request = MoveJoint.Request()
         
         # 홈 위치 각도 설정
         request.angles = angle 
-        request.speed = RobotParam.j_arm_speed  # 속도 설정
-        request.acc = RobotParam.j_arm_accel    # 가속도 설정
+        request.speed = speed  # 속도 설정
+        request.acc = acc    # 가속도 설정
         request.mvtime = 0.0    # 이동 시간 설정
         request.wait = wait    # 완료 대기 설정
         # 서비스 호출
