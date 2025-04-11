@@ -44,6 +44,12 @@ class KcareRobotRemoteControlNode(Node):
         self.rbutils.call_set_servo_angle(RobotParam.arm_ready)
         self.rbutils.call_set_mode(6)
         self.rbutils.call_set_state(0)
+        
+        self.rbutils.xarm_set_tool_baudrate()
+        self.rbutils.xarm_set_tool_timeout()
+        self.rbutils.xarm_gripper_init()
+        self.rbutils.xarm_set_motor_torque(50)
+
         self.rbutils.call_elevation_command(RobotParam.elev_home)
         self.get_logger().info('RB Init Done')
         self.ready_arm=True
@@ -99,8 +105,9 @@ class KcareRobotRemoteControlNode(Node):
         self.get_logger().info(f"Target Angle : {target_robot_angle}, Target Gripper : {target_robot_gripper}")
 
         self.rbutils.call_set_servo_angle(target_robot_angle,speed=1.5,acc=10.0,wait=False)
-
-        self.rbutils.call_gripper_command(target_robot_gripper,50)
+        self.rbutils.xarm_set_finger_position(target_robot_gripper)
+        
+        #self.rbutils.call_gripper_command(target_robot_gripper,50)
 
 
     def timer_callback(self):

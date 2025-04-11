@@ -58,7 +58,7 @@ class RobotUtils:
             'set_state': ('/xarm/set_state', SetInt16),
             'clean_error': ('/xarm/clean_error', Call),
             'elevation_command' : ('/elevation/set_position',ElevationCommand),
-            'gripper_command' : ('/gripper/command',GripperCommand),
+            #'gripper_command' : ('/gripper/command',GripperCommand),
             'head_command' : ('/head/pose_command',HeadPoseCommand),
             'set_xarm_tool_baud' : ('/xarm/set_tgpio_modbus_baudrate',SetInt32),
             'set_xarm_tool_timeout' : ('/xarm/set_tgpio_modbus_timeout',SetModbusTimeout),
@@ -418,7 +418,7 @@ class RobotUtils:
             0x00, 0x68, # Register 0: Command 104 (Set Finger Position)
             (position >> 8) & 0xFF, position & 0xFF  # Register 1: Position
         ]
-        return self.xarm_modbus_data(data)
+        return self.xarm_modbus_data(data,wait=False)
 
 
     def get_elev_pose(self):
