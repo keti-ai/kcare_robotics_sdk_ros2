@@ -3,7 +3,10 @@ import rclpy.executors
 from rclpy.node import Node
 
 from xarm_msgs.msg import RobotMsg
+#For Robot arm Control
 from xarm_msgs.srv import MoveJoint, MoveCartesian, SetInt16, SetInt16ById, Call
+#For Robot tool Control
+from xarm_msgs.srv import SetInt32, SetModbusTimeout, GetSetModbusData
 from kcare_robot_ros2_controller_msgs.msg import HeadState, LMState
 from kcare_robot_ros2_controller_msgs.srv import ElevationCommand, GripperCommand, HeadPoseCommand
 
@@ -57,6 +60,9 @@ class RobotUtils:
             'elevation_command' : ('/elevation/set_position',ElevationCommand),
             'gripper_command' : ('/gripper/command',GripperCommand),
             'head_command' : ('/head/pose_command',HeadPoseCommand),
+            'set_xarm_tool_baud' : ('/xarm/set_tgpio_modbus_baudrate',SetInt32),
+            'set_xarm_tool_timeout' : ('/xarm/set_tgpio_modbus_timeout',SetModbusTimeout),
+            'getset_xarm_modbus_data' : ('/xarm/getset_tgpio_modbus_data',GetSetModbusData),
         }
 
         self.service_clients = {}
@@ -328,6 +334,91 @@ class RobotUtils:
             self.node.get_logger().info(f'Head Move : {response.successed}')
         else:
             self.node.get_logger().error('Failed to call service /gripper/command') 
+
+    def xarm_set_tool_baudrate(self,baudrate=115200):
+        request=SetInt32.Request()
+        request.data=baudrate
+
+        future = self.service_clients['set_xarm_tool_baud'].call_async(request)
+        while not future.done():
+            # 여기서는 별도로 spin_once가 이미 다른 스레드에서 처리되므로
+            # 추가적으로 spin_once(self)를 호출하지 않습니다.
+            time.sleep(RobotParam.spin_time)
+            
+        if future.result() is not None:
+            response = future.result()
+            self.node.get_logger().info(f'Xarm set Tool Baud : {response.message}')
+        else:
+            self.node.get_logger().error('Failed to call service /xarm/set_tgpio_modbus_baudrate') 
+            
+
+    def xarm_set_tool_timeout(self,timeout=30):
+        request=SetModbusTimeout.Request()
+        request.timeout=timeout
+
+        future = self.service_clients['set_xarm_tool_timeout'].call_async(request)
+        while not future.done():
+            # 여기서는 별도로 spin_once가 이미 다른 스레드에서 처리되므로
+            # 추가적으로 spin_once(self)를 호출하지 않습니다.
+            time.sleep(RobotParam.spin_time)
+            
+        if future.result() is not None:
+            response = future.result()
+            self.node.get_logger().info(f'Xarm set Tool Timeout : {response.message}')
+        else:
+            self.node.get_logger().error('Failed to call service /xarm/set_tgpio_modbus_timeout') 
+         
+    def xarm_modbus_data(self,data,wait=True):
+        request=GetSetModbusData.Request()
+        request.modbus_data=data
+        request.modbus_length=len(data)
+        request.ret_length=11
+        
+        future = self.service_clients['getset_xarm_modbus_data'].call_async(request)
+        
+        if not wait:
+            return None
+        
+        while not future.done():
+            # 여기서는 별도로 spin_once가 이미 다른 스레드에서 처리되므로
+            # 추가적으로 spin_once(self)를 호출하지 않습니다.
+            time.sleep(RobotParam.spin_time)
+
+        if future.result() is not None:
+            response = future.result()
+            self.node.get_logger().info(f'Xarm Send Modbus Result Return : {response.ret_data}')
+            return response.ret_data
+        else:
+            self.node.get_logger().error('Failed to call service getset_xarm_modbus_data')
+            return None
+         
+    def xarm_gripper_init(self):
+        data = [0x01, 0x10, 0x00, 0x00, 0x00, 0x02, 0x04, 0x00, 0x65, 0x00, 0x00]
+        return self.xarm_modbus_data(data)
+        
+    def xarm_set_motor_torque(self, ratio):
+        data = [
+            0x01,
+            0x10,
+            0x00, 0x00,
+            0x00, 0x02,
+            0x04,
+            0x00, 0xD4,  # Command 212
+            (ratio >> 8) & 0xFF, ratio & 0xFF
+        ]
+        return self.xarm_modbus_data(data)
+
+    def xarm_set_finger_position(self, position):
+        data = [
+            0x01,       # slave ID
+            0x10,       # Function code: Write Multiple Registers
+            0x00, 0x00, # Start address: Register 0
+            0x00, 0x02, # Register count: 2
+            0x04,       # Byte count: 4 bytes (2 registers)
+            0x00, 0x68, # Register 0: Command 104 (Set Finger Position)
+            (position >> 8) & 0xFF, position & 0xFF  # Register 1: Position
+        ]
+        return self.xarm_modbus_data(data)
 
 
     def get_elev_pose(self):

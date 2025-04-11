@@ -22,12 +22,12 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'kcare_robot_joy_control_node = kcare_robot_ros2_controller.src.joystick.kcare_robot_joy_control_node:main',
+            'kcare_robot_joy_control_node = kcare_robot_ros2_controller.src.joystick.kcare_robot_joy_control_node_slamware:main',
             'lm_control_node = kcare_robot_ros2_controller.src.elevation.lm_control_node:main',
             #'lm_failsafe_node = kcare_robot_ros2_controller.src.elevation.lm_failsafe:main',
             'head_control_node = kcare_robot_ros2_controller.src.head.head_control_node:main',
             'gripper_control_node = kcare_robot_ros2_controller.src.gripper.gripper_node:main',
-            'master_node = kcare_robot_ros2_controller.src.master.kcare_master:main',
+            #'master_node = kcare_robot_ros2_controller.src.master.kcare_master:main',
             'remote_node = kcare_robot_ros2_controller.src.joystick.kcare_robot_remote_control_node:main'
         ],
     },
