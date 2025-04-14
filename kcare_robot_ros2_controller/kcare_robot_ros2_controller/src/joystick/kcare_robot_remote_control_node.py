@@ -41,14 +41,18 @@ class KcareRobotRemoteControlNode(Node):
         self.rbutils.call_set_mode(0)
         #로봇 스테이트 셋
         self.rbutils.call_set_state(0)
-        self.rbutils.call_set_servo_angle(RobotParam.arm_ready)
-        self.rbutils.call_set_mode(6)
-        self.rbutils.call_set_state(0)
         
         self.rbutils.xarm_set_tool_baudrate()
         self.rbutils.xarm_set_tool_timeout()
         self.rbutils.xarm_gripper_init()
         self.rbutils.xarm_set_motor_torque(50)
+        self.rbutils.xarm_set_gripper_speed_percent(100)
+        
+        self.rbutils.call_set_servo_angle(RobotParam.arm_ready)
+        self.rbutils.call_set_mode(6)
+        self.rbutils.call_set_state(0)
+        
+
 
         self.rbutils.call_elevation_command(RobotParam.elev_home)
         self.get_logger().info('RB Init Done')

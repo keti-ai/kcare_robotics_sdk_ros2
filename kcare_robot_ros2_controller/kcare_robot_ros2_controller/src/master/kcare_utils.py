@@ -420,6 +420,18 @@ class RobotUtils:
         ]
         return self.xarm_modbus_data(data,wait=False)
 
+    def xarm_set_gripper_speed_percent(self, percent):
+        data = [
+            0x01,       # slave ID
+            0x10,       # function code: Write Multiple Registers
+            0x00, 0x00, # start address: register 0
+            0x00, 0x02, # number of registers to write
+            0x04,       # byte count (2 regs × 2 bytes)
+            0x00, 0xD5, # command 213 = Set Speed (as percent)
+            (percent >> 8) & 0xFF, percent & 0xFF  # parameter
+        ]
+        return self.xarm_modbus_data(data)
+
 
     def get_elev_pose(self):
         cur_lift_position=copy.deepcopy(self.rbstate.lm_pose)
