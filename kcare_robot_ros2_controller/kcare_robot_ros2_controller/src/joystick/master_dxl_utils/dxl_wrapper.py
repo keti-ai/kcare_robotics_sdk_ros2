@@ -19,7 +19,7 @@ JOINT_LIMITS_DEG = {
     1: (0-5, 0+110),  # Joint 1: min, max
     2: (0-90, 0+90),  # Joint 2: min, max
     3: (0, 0+135),  # Joint 3: min, max
-    4: (0-60, 0+60),  # Joint 4: min, max
+    4: (0-100, 0+100),  # Joint 4: min, max
     5: (0-92, 0+95),  # Joint 5: min, max
     6: (0-135, 0+135),  # Joint 6: min, max
     7: (-30, 0) # Gripper min, max
