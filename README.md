@@ -76,7 +76,16 @@
     rosdep update
     rosdep install --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
 
-#### 3.2.3 빌드
+### 3.2.3 config 파일 수정
+
+Tool Modbus 활성화를 위해 xarm_ros2/xarm_api/config/xarm_params.yaml 파일에서 아래 부분 수정
+
+    set_tgpio_modbus_timeout: false --> true
+    get_tgpio_modbus_baudrate: false --> true
+    set_tgpio_modbus_baudrate: false --> true
+    getset_tgpio_modbus_data: false --> true
+
+#### 3.2.4 빌드
 
     cd ~/xarm_ws/
     # build all packages
@@ -125,7 +134,7 @@
     source ~/camera_ws/install/setup.bash
     ros2 launch orbbec_camera gemini2.launch.py camera_name:=hand \
         depth_registration:=true \
-        device_num:=2 \ ##카메라가 여러개 연결되어있을경우 카메라 장치 순서 확인후 파라미터 추가가
+        device_num:=2 \ ##카메라가 여러개 연결되어있을경우 카메라 장치 순서 확인후 파라미터 추가
         serial_number:=AY3N3310006 \
         color_fps:=15 \
         depth_fps:=15 \
