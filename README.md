@@ -80,6 +80,7 @@
 
 Tool Modbus 활성화를 위해 xarm_ros2/xarm_api/config/xarm_params.yaml 파일에서 아래 부분 수정
 
+    set_tool_position: false --> true
     set_tgpio_modbus_timeout: false --> true
     get_tgpio_modbus_baudrate: false --> true
     set_tgpio_modbus_baudrate: false --> true
