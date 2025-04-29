@@ -1,5 +1,5 @@
-dynamixel-sdk==3.7.31
-numpy==1.22.4
-opencv-python==4.5.5.64
-pymodbus==3.8.6
-pyserial==3.5
+dynamixel-sdk
+numpy
+opencv-python
+pymodbus
+pyserial
