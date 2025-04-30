@@ -16,11 +16,11 @@ def generate_launch_description():
         'xarm7_driver.launch.py'
     )
     
-    robot_ip_arg = LaunchConfiguration('robot_ip',default='192.168.1.245')
+    robot_ip_arg = LaunchConfiguration('robot_ip',default='192.168.1.233')
 
     return LaunchDescription([
         # Robot IP 설정 인자
-        DeclareLaunchArgument('robot_ip',default_value='192.168.1.245',description='IP address of the robot'),
+        DeclareLaunchArgument('robot_ip',default_value='192.168.1.233',description='IP address of the robot'),
 
         # xarm7_driver.launch.py 포함
         IncludeLaunchDescription(
@@ -60,8 +60,8 @@ def generate_launch_description():
                 # 필요한 경우 파라미터를 추가하세요
             }]
         ),
-
-        # Gripper control node
+        
+        # Gripper Control Node
         Node(
             package='kcare_robot_ros2_controller',
             executable='gripper_control_node',

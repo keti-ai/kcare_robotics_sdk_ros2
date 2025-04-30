@@ -26,7 +26,7 @@ setup(
             'lm_control_node = kcare_robot_ros2_controller.src.elevation.lm_control_node:main',
             #'lm_failsafe_node = kcare_robot_ros2_controller.src.elevation.lm_failsafe:main',
             'head_control_node = kcare_robot_ros2_controller.src.head.head_control_node:main',
-            'gripper_control_node = kcare_robot_ros2_controller.src.gripper.gripper_node:main',
+            'gripper_control_node = kcare_robot_ros2_controller.src.gripper.xarm_gripper_node:main',
             #'master_node = kcare_robot_ros2_controller.src.master.kcare_master:main',
             'remote_node = kcare_robot_ros2_controller.src.joystick.kcare_robot_remote_control_node:main'
         ],
