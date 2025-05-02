@@ -20,7 +20,7 @@ class LMControlNode(Node):
         self.lm_client.connect_lm()
         self.cmd_lock = Lock()
 
-        self.offset_position = 185.0
+        self.offset_position = 103.9
         self.glob_speed = 5000
 
         self.elevation_initialize()

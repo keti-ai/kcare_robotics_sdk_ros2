@@ -36,10 +36,6 @@ class XarmToolGripper(Node):
         self.gripper_service= self.create_service(GripperCommand,'gripper/command',self.set_gripperpose_callback,callback_group=self.srv_callback)
         
         
-
-            
-
-        
     def xarm_set_tool_baudrate(self,baudrate=115200):
         request=SetInt32.Request()
         request.data=baudrate
@@ -150,6 +146,18 @@ class XarmToolGripper(Node):
         ]
         return self.xarm_modbus_data(data)
 
+    def xarm_disable_impedance(self):
+        data = [
+            0x01,       # slave ID
+            0x10,       # function code: Write Multiple Registers
+            0x00, 0x00, # start address register 0
+            0x00, 0x02, # number of registers = 2
+            0x04,       # byte count = 4 bytes
+            0x00, 0x6D, # command 109 (Disable Impedance Control)
+            0x00, 0x00  # no parameter
+        ]
+        return self.xarm_modbus_data(data)
+
     def xarm_set_impedance_parameters(self, level):
         if level < 1 or level > 10:
             raise ValueError("Impedance level must be between 1 and 10")
@@ -172,15 +180,17 @@ class XarmToolGripper(Node):
         # 툴 타임아웃 세팅
         self.xarm_set_tool_timeout(timeout=30)
         # 그리퍼 초기화
-        self.xarm_enable_impedance()
+        #self.xarm_enable_impedance()
+        self.xarm_disable_impedance()
         self.xarm_gripper_init()
         self.xarm_set_gripper_speed_percent(100)
 
 
     def set_gripperpose_callback(self,request,response):
         self.get_logger().info(f"Gripper Service Call.")
-        if (0 <= request.pose <= 1000 and 1<= request.force <= 10):
-            self.xarm_set_impedance_parameters(request.force)
+        if (0 <= request.pose <= 1000 and 50<= request.force <= 100):
+            #self.xarm_set_impedance_parameters(request.force)
+            self.xarm_set_motor_torque(request.force)
             time.sleep(0.05)
             self.xarm_set_finger_position(request.pose)
             self.get_logger().info(f"Gripper Work Fine. Pose : {request.pose}, Force : {request.force}.")
