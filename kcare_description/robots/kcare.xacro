@@ -1,0 +1,99 @@
+<?xml version="1.0" ?>
+<robot name="kcare" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="package_name" value="kcare_description"/>
+  <xacro:property name="mesh_path" value="package://${package_name}/meshes"/>
+
+  <link name="elevation_base">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/elevation/elevation_base.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/elevation/elevation_base.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="linear_block">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/elevation/linear_block.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/elevation/linear_block.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="rz_pantilt">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/elevation/rz_pantilt.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/elevation/rz_pantilt.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="ry_pantilt">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/elevation/ry_pantilt.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}/elevation/ry_pantilt.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="elevation_joint" type="prismatic">
+    <origin xyz="0.0 0.0 0.1" rpy="0 0 0"/>
+    <parent link="elevation_base"/>
+    <child link="linear_block"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit upper="0.65" lower="0.0" effort="100" velocity="100"/>
+  </joint>
+
+  <joint name="rz_joint" type="revolute">
+    <origin xyz="-0.067338 0.0 0.9285" rpy="0 0 0"/>
+    <parent link="elevation_base"/>
+    <child link="rz_pantilt"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit
+      lower="-3.14"
+      upper="3.14"
+      effort="30"
+      velocity="3.14" />
+  </joint>
+
+  <joint name="ry_joint" type="revolute">
+    <origin xyz="0.024 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+    <parent link="rz_pantilt"/>
+    <child link="ry_pantilt"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit
+      lower="-3.14"
+      upper="3.14"
+      effort="30"
+      velocity="3.14" />
+  </joint>
+
+</robot>
