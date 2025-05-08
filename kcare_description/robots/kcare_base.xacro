@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<robot name="kcare" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="package_name" value="kcare_description"/>
+  <xacro:property name="mesh_path" value="package://${package_name}/meshes"/>
+  <xacro:include filename="$(find kcare_description)/robots/common/link.xacro"/>
+
+  <xacro:common_link
+    name="elevation_base"
+    inertial_origin="-0.064248 0.002013 0.430542"
+    mass="46.762093"
+    ixx="3.383298" iyy="3.370561" izz="0.389958" ixy="-0.001907" iyz="0.022609" ixz="-0.055609"
+    mesh_file="${mesh_path}/elevation/elevation_base.stl"
+  />
+
+  <xacro:common_link
+    name="linear_block"
+    inertial_origin="0.083559 0.000947 0.094867"
+    mass="14.786875"
+    ixx="0.040149" iyy="0.052213" izz="0.056549" ixy="0.002075" iyz="0.000896" ixz="0.004620"
+    mesh_file="${mesh_path}/elevation/linear_block.stl"
+  />
+
+  <xacro:common_link
+    name="rz_pantilt"
+    inertial_origin="-0.055338 0.000517 0.929017"
+    mass="0.442703"
+    ixx="0.000091" iyy="0.000123" izz="0.000123" ixy="-0.000000" iyz="0.000002" ixz="0.000000"
+    mesh_file="${mesh_path}/elevation/rz_pantilt.stl"
+  />
+
+  <xacro:common_link
+    name="ry_pantilt"
+    inertial_origin="-0.043338 -0.000000 0.966173"
+    mass="0.053319"
+    ixx="0.000032" iyy="0.000020" izz="0.000019" ixy="0.000000" iyz="-0.000000" ixz="0.000000"
+    mesh_file="${mesh_path}/elevation/ry_pantilt.stl"
+  />
+  
+
+
+  <xacro:include filename="$(find kcare_description)/robots/slamware.xacro"/>
+
+  <joint name="slam_to_base" type="fixed">
+    <parent link="slam_base"/>
+    <child link="elevation_base"/>
+    <origin xyz="0.0 0.0 0.362985" rpy="0 0 0"/>
+  </joint>
+
+  <xacro:include filename="$(find xarm_description)/urdf/xarm_device_macro.xacro" />
+
+  <xacro:xarm_device 
+      dof="7"
+      attach_to="linear_block" 
+      attach_xyz="0.151662 0.0 -0.009"
+      attach_rpy="0 0 ${-90 * pi/180}"
+  />
+
+  <joint name="elevation_joint" type="prismatic">
+    <origin xyz="0.0 0.0 0.1" rpy="0 0 0"/>
+    <parent link="elevation_base"/>
+    <child link="linear_block"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit upper="0.65" lower="0.0" effort="100" velocity="100"/>
+  </joint>
+
+  <joint name="rz_joint" type="revolute">
+    <origin xyz="-0.067338 0.0 0.9285" rpy="0 0 0"/>
+    <parent link="elevation_base"/>
+    <child link="rz_pantilt"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit
+      lower="-3.14"
+      upper="3.14"
+      effort="30"
+      velocity="3.14" />
+  </joint>
+
+  <joint name="ry_joint" type="revolute">
+    <origin xyz="0.024 0.0 0.0" rpy="1.5708 0.0 0.0"/>
+    <parent link="rz_pantilt"/>
+    <child link="ry_pantilt"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit
+      lower="-3.14"
+      upper="3.14"
+      effort="30"
+      velocity="3.14" />
+  </joint>
+
+
+
+
+</robot>
