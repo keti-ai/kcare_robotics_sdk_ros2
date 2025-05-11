@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<robot name="femto_bolt" xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!-- Properties -->
+  <xacro:property name="M_PI" value="3.1415926535897931" />
+
+  <!-- Dimensions -->
+  <xacro:property name="mesh_path" value="package://kcare_description/meshes/femto_bolt/" />
+
+  <xacro:property name="base_link_to_link_x" value="0.03645"/>
+  <xacro:property name="base_link_to_link_y" value="0.00198"/>
+  <xacro:property name="base_link_to_link_z" value="0.021"/>
+  <xacro:property name="depth_to_ir_offset" value="0.0"/>
+  <xacro:property name="camera_link_to_depth_rotation_roll" value="-0.0063718"/>
+  <xacro:property name="camera_link_to_depth_rotation_pitch" value="0.1061316"/>
+  <xacro:property name="camera_link_to_depth_rotation_yaw" value="0.000231"/>
+  <xacro:property name="depth_to_color_offset_x" value="-0.0021445322036743163"/>
+  <xacro:property name="depth_to_color_offset_y" value="-0.03267627716064453"/> 
+  <xacro:property name="depth_to_color_offset_z" value="-0.0010942233800888062"/>
+  <xacro:property name="depth_to_color_rotation_roll" value="0.006371800289866152"/>
+  <xacro:property name="depth_to_color_rotation_pitch" value="-0.10613163835054795"/>
+  <xacro:property name="depth_to_color_rotation_yaw" value="-0.00023102465978322808"/>
+
+  <!-- Base Link -->
+  <link name="femto_base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}femto_bolt.stl"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792 0.820 0.933 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="${mesh_path}femto_bolt.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.2"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <joint name="link_joint" type="fixed">
+    <origin xyz="${base_link_to_link_x} ${base_link_to_link_y} ${base_link_to_link_z}" rpy="0 0 0"/>
+    <parent link="femto_base_link"/>
+    <child link="femto_link"/>
+  </joint>
+
+  <link name="femto_link"/>
+
+  <!-- Depth Camera -->
+  <joint name="depth_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="${camera_link_to_depth_rotation_roll} ${camera_link_to_depth_rotation_pitch} ${camera_link_to_depth_rotation_yaw}"/>
+    <parent link="femto_link"/>
+    <child link="depth_frame"/>
+  </joint>
+  <link name="depth_frame"/>
+
+  <joint name="depth_optical_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}"/>
+    <parent link="depth_frame"/>
+    <child link="depth_optical_frame"/>
+  </joint>
+  <link name="depth_optical_frame"/>
+
+  <!-- IR Camera -->
+  <joint name="ir_joint" type="fixed">
+    <origin xyz="0 ${depth_to_ir_offset} 0" rpy="0 0 0"/>
+    <parent link="depth_frame"/>
+    <child link="ir_frame"/>
+  </joint>
+  <link name="ir_frame"/>
+
+  <joint name="ir_optical_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}"/>
+    <parent link="ir_frame"/>
+    <child link="ir_optical_frame"/>
+  </joint>
+  <link name="ir_optical_frame"/>
+
+  <!-- Color Camera -->
+  <joint name="color_joint" type="fixed">
+    <origin xyz="${depth_to_color_offset_x} ${depth_to_color_offset_y} ${depth_to_color_offset_z}"
+            rpy="${depth_to_color_rotation_roll} ${depth_to_color_rotation_pitch} ${depth_to_color_rotation_yaw}"/>
+    <parent link="depth_frame"/>
+    <child link="color_frame"/>
+  </joint>
+  <link name="color_frame"/>
+
+  <joint name="color_optical_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="${-M_PI/2} 0 ${-M_PI/2}"/>
+    <parent link="color_frame"/>
+    <child link="color_optical_frame"/>
+  </joint>
+  <link name="color_optical_frame"/>
+
+</robot>

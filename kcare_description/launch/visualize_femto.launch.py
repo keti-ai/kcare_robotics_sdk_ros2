@@ -23,7 +23,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     manipulator_xacro_file = os.path.join(get_package_share_directory('kcare_description'), 'robots',
-                                     'slamware.urdf.xacro')
+                                     'femto_bolt.urdf.xacro')
 
     robot_description = Command(
         [FindExecutable(name='xacro'), ' ', manipulator_xacro_file])

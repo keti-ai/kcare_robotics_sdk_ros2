@@ -36,7 +36,6 @@
     ixx="0.000032" iyy="0.000020" izz="0.000019" ixy="0.000000" iyz="-0.000000" ixz="0.000000"
     mesh_file="${mesh_path}/elevation/ry_pantilt.stl"
   />
-  
 
 
   <xacro:include filename="$(find kcare_description)/robots/slamware.xacro"/>
@@ -87,8 +86,5 @@
       effort="30"
       velocity="3.14" />
   </joint>
-
-
-
 
 </robot>

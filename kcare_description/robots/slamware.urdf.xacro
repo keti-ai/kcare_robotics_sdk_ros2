@@ -6,12 +6,14 @@
   <xacro:include filename="$(find kcare_description)/robots/common/link.xacro"/> -->
 
 
+  <xacro:property name="mesh_path" value="package://kcare_description/meshes/"/>
+
   <xacro:common_link
     name="slam_base"
     inertial_origin="-0.004242067006968334 0.0005565721742923574 0.176282566938588"
     mass="42.44816908546966"
     ixx="1.368829" iyy="1.544543" izz="1.587721" ixy="0.00047" iyz="0.00375" ixz="-0.000201"
-    mesh_file="${mesh_path}/slamware/base_link.stl"
+    mesh_file="${mesh_path}slamware/base_link.stl"
   />
 
   <xacro:common_link
@@ -19,7 +21,7 @@
     inertial_origin="-0.001865 0.052015 -0.010160"
     mass="3.867230"
     ixx="0.016843" iyy="0.009476" izz="0.009476" ixy="-0.000000" iyz="0.000000" ixz="0.000000"
-    mesh_file="${mesh_path}/slamware/slam_wheel.stl"
+    mesh_file="${mesh_path}slamware/slam_wheel.stl"
     material="black"
   />
 
@@ -28,7 +30,7 @@
     inertial_origin="-0.001865 0.052015 -0.010160"
     mass="3.867230"
     ixx="0.016843" iyy="0.009476" izz="0.009476" ixy="-0.000000" iyz="0.000000" ixz="0.000000"
-    mesh_file="${mesh_path}/slamware/slam_wheel.stl"
+    mesh_file="${mesh_path}slamware/slam_wheel.stl"
     material="black"
   />
 
@@ -37,7 +39,7 @@
     inertial_origin="-0.018022 -0.000120 -0.048838"
     mass="1.177702"
     ixx="0.001147" iyy="0.001298" izz="0.000735" ixy="-0.000001" iyz="-0.000002" ixz="-0.000319"
-    mesh_file="${mesh_path}/slamware/caster.stl"
+    mesh_file="${mesh_path}slamware/caster.stl"
     material="black"
   />
 
@@ -46,7 +48,7 @@
     inertial_origin="-0.018022 -0.000120 -0.048838"
     mass="1.177702"
     ixx="0.001147" iyy="0.001298" izz="0.000735" ixy="-0.000001" iyz="-0.000002" ixz="-0.000319"
-    mesh_file="${mesh_path}/slamware/caster.stl"
+    mesh_file="${mesh_path}slamware/caster.stl"
     material="black"
   />
 
@@ -55,7 +57,7 @@
     inertial_origin="-0.018022 -0.000120 -0.048838"
     mass="1.177702"
     ixx="0.001147" iyy="0.001298" izz="0.000735" ixy="-0.000001" iyz="-0.000002" ixz="-0.000319"
-    mesh_file="${mesh_path}/slamware/caster.stl"
+    mesh_file="${mesh_path}slamware/caster.stl"
     material="black"
   />
 
@@ -64,7 +66,7 @@
     inertial_origin="-0.018022 -0.000120 -0.048838"
     mass="1.177702"
     ixx="0.001147" iyy="0.001298" izz="0.000735" ixy="-0.000001" iyz="-0.000002" ixz="-0.000319"
-    mesh_file="${mesh_path}/slamware/caster.stl"
+    mesh_file="${mesh_path}slamware/caster.stl"
     material="black"
   />
 
