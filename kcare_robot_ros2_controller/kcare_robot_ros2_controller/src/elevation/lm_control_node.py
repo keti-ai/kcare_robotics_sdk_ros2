@@ -20,6 +20,7 @@ class LMControlNode(Node):
         self.lm_client.connect_lm()
         self.cmd_lock = Lock()
 
+        #TODO change by robots 185
         self.offset_position = 103.9
         self.glob_speed = 5000
 
