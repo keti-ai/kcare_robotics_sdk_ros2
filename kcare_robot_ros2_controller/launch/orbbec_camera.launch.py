@@ -22,9 +22,9 @@ def generate_launch_description():
             'depth_registration': 'true',
             'color_fps': '15',
             'depth_fps': '15',
-            'enable_point_cloud': 'false',
-            'cloud_frame_id': '',
-            'enable_colored_point_cloud': 'false',
+            'enable_point_cloud': 'true',
+            'cloud_frame_id': 'femto_depth_optical_frame',
+            'enable_colored_point_cloud': 'true',
         }.items()
     )
 
@@ -40,9 +40,9 @@ def generate_launch_description():
             'depth_registration': 'true',
             'color_fps': '15',
             'depth_fps': '15',
-            'enable_point_cloud': 'false',
-            'cloud_frame_id': '',
-            'enable_colored_point_cloud': 'false',
+            'enable_point_cloud': 'true',
+            'cloud_frame_id': 'hand_depth_optical_frame',
+            'enable_colored_point_cloud': 'true',
         }.items()
     )
 
