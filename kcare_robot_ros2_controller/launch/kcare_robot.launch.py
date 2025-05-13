@@ -1,85 +1,51 @@
-#!/usr/bin/env python3
-
-import os
-
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
-from launch.substitutions import LaunchConfiguration
+import os
+
 
 def generate_launch_description():
-    xarm_driver_launch_file = os.path.join(
-        get_package_share_directory('xarm_api'),
-        'launch',
-        'xarm7_driver.launch.py'
+    # Include launch files
+    package_dir = get_package_share_directory('xarm_api')
+    launch_file_dir = os.path.join(package_dir, 'launch')
+    launch1_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_file_dir, 'xarm7_driver.launch.py')
+        ),
+        launch_arguments={
+            'robot_ip': '192.168.1.233',
+        }.items()
     )
-    
-    robot_ip_arg = LaunchConfiguration('robot_ip',default='192.168.1.245')
 
-    return LaunchDescription([
-        # Robot IP 설정 인자
-        DeclareLaunchArgument('robot_ip',default_value='192.168.1.245',description='IP address of the robot'),
-
-        # xarm7_driver.launch.py 포함
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(xarm_driver_launch_file),
-            launch_arguments={'robot_ip': robot_ip_arg}.items()
+    # Include launch files
+    package_dir = get_package_share_directory('kcare_robot_ros2_controller')
+    launch_file_dir = os.path.join(package_dir, 'launch')
+    launch2_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_file_dir, 'kcare_device.launch.py')
         ),
+        launch_arguments={
+        }.items()
+    )
 
-        # # Joystick control node
-        # Node(
-        #     package='kcare_robot_ros2_controller',
-        #     executable='kcare_robot_joy_control_node',
-        #     name='kcare_robot_joy_control_node',
-        #     output='screen',
-        #     parameters=[{
-        #         # 필요한 경우 파라미터를 추가하세요
-        #     }]
-        # ),
+    # Include launch files
+    package_dir = get_package_share_directory('kcare_robot_ros2_controller')
+    launch_file_dir = os.path.join(package_dir, 'launch')
+    launch3_include = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(launch_file_dir, 'orbbec_camera.launch.py')
+        ),
+        launch_arguments={
+        }.items()
+    )
 
-        # LM control node
-        Node(
-            package='kcare_robot_ros2_controller',
-            executable='lm_control_node',
-            name='lm_control_node',
-            output='screen',
-            parameters=[{
-                # 필요한 경우 파라미터를 추가하세요
-            }]
-        ),
-
-        # Head control node
-        Node(
-            package='kcare_robot_ros2_controller',
-            executable='head_control_node',
-            name='head_control_node',
-            output='screen',
-            parameters=[{
-                # 필요한 경우 파라미터를 추가하세요
-            }]
-        ),
-        
-        # Gripper Control Node
-        Node(
-            package='kcare_robot_ros2_controller',
-            executable='gripper_control_node',
-            name='gripper_control_node',
-            output='screen',
-            parameters=[{
-                # 필요한 경우 파라미터를 추가하세요
-            }]
-        ),
-
-        # Device Server Node
-        Node(
-            package='kcare_robot_ros2_controller',
-            executable='device_node',
-            name='device_node',
-            output='screen',
-            parameters=[{
-                # 필요한 경우 파라미터를 추가하세요
-            }]
-        ),
+    # Launch description
+    ld = LaunchDescription([
+        GroupAction([launch1_include]),
+        GroupAction([launch2_include]),
+        GroupAction([launch3_include]),
     ])
+
+    return ld
