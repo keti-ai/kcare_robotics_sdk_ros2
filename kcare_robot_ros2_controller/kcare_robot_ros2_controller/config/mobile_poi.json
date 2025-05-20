@@ -1,0 +1,31 @@
+{
+    "locations": {
+      "home": {
+        "type": "homing"
+      },
+      "desk": {
+        "type": "pose",
+        "x": 3.330,
+        "y": -0.969,
+        "theta": -1.5708
+      },
+      "shelf": {
+        "type": "pose",
+        "x": 4.41,
+        "y": -0.252,
+        "theta": 0.0
+      },
+      "charging_station": {
+        "type": "pose",
+        "x": 0.5,
+        "y": -2.0,
+        "theta": 1.5708
+      },
+      "pickup_point": {
+        "type": "pose",
+        "x": 5.0,
+        "y": 1.0,
+        "theta": 0.7854
+      }
+    }
+  }

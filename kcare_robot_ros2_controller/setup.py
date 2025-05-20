@@ -12,6 +12,7 @@ setup(
     data_files=[
         (os.path.join('share', package_name), ['package.xml']),
         (os.path.join('share', package_name, f'launch'), glob(f'launch/*.py')),
+        (os.path.join('share', package_name, 'config'), glob(os.path.join(package_name, 'config', '*.json'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -29,7 +30,10 @@ setup(
             'gripper_control_node = kcare_robot_ros2_controller.src.gripper.xarm_gripper_node:main',
             'virtual_gripper_node = kcare_robot_ros2_controller.src.gripper.virtual_gripper_node:main',
             'device_node = kcare_robot_ros2_controller.src.master.kcare_device_server:main',
-            'remote_node = kcare_robot_ros2_controller.src.joystick.kcare_robot_remote_control_node:main'
+            'remote_node = kcare_robot_ros2_controller.src.joystick.kcare_robot_remote_control_node:main',
+            'save_map = kcare_robot_ros2_controller.src.mobile.slam_save_map:main',
+            'load_map = kcare_robot_ros2_controller.src.mobile.slam_load_map:main',
+            'mobile_control_node = kcare_robot_ros2_controller.src.mobile.mobile_control_node:main',
         ],
     },
 )

@@ -34,7 +34,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GripperCommand.srv"
   "srv/ElevationCommand.srv"
   "srv/HeadPoseCommand.srv"
-  "srv/MobileGoHomeCommand.srv"
   "srv/MobileMoveLabel.srv"
   DEPENDENCIES std_msgs
  )
