@@ -13,6 +13,7 @@ setup(
         (os.path.join('share', package_name), ['package.xml']),
         (os.path.join('share', package_name, f'launch'), glob(f'launch/*.py')),
         (os.path.join('share', package_name, 'config'), glob(os.path.join(package_name, 'config', '*.json'))),
+        (os.path.join('share', package_name, 'config'), glob(os.path.join(package_name, 'config', '*.stcm'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

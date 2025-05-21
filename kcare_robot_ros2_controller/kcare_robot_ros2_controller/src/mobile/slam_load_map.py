@@ -27,13 +27,20 @@ class StcmMapLoaderWithPose(Node):
             self.get_logger().error(f"Ensure your package '{package_name}' is correctly built and sourced.")
             self.map_load_path = None # Set to None if path resolution fails
 
-    def send_request(self, filename):
+    def send_request(self):
+        if self.map_load_path is None:
+            self.get_logger().error("Cannot load map: Map load path was not determined.")
+            return
+
         # Load .stcm map file
         try:
-            with open(filename, "rb") as f:
+            with open(self.map_load_path, "rb") as f:
                 self.req.raw_stcm = f.read()
+        except FileNotFoundError:
+            self.get_logger().error(f"Map file not found at: {self.map_load_path}")
+            return
         except Exception as e:
-            self.get_logger().error(f"Failed to read file: {e}")
+            self.get_logger().error(f"Failed to read map file from {self.map_load_path}: {e}")
             return
 
         # Set initial pose to (0.0, 0.0, yaw=0.0)
@@ -58,7 +65,7 @@ class StcmMapLoaderWithPose(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = StcmMapLoaderWithPose()
-    node.send_request("slam_lab.stcm")  # 불러올 맵 경로
+    node.send_request()  # 불러올 맵 경로
     node.destroy_node()
     rclpy.shutdown()
 
