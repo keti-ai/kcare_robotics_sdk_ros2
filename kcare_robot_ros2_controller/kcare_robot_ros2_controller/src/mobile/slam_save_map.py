@@ -18,7 +18,7 @@ class StcmMapSaver(Node):
         try:
             package_share_directory = get_package_share_directory(package_name)
             # Define the path to save the map within the 'config' folder
-            self.map_save_path = os.path.join(package_share_directory, 'config', 'slam_lab.stcm')
+            self.map_save_path = os.path.join(package_share_directory, 'config', 'dure.stcm')
             self.get_logger().info(f"Map will be saved to: {self.map_save_path}")
         except Exception as e:
             self.get_logger().error(f"Failed to find package directory or set map save path: {e}")

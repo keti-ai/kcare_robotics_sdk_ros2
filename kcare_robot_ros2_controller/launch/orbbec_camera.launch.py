@@ -16,8 +16,8 @@ def generate_launch_description():
         ),
         launch_arguments={
             'camera_name': 'femto',
-            'usb_port': '2-3.2',    # Change by camera port
-            'serial_number': 'CL8764100X2', # Change by camera serial numper
+            'usb_port': '2-1',    # Change by camera port
+            'serial_number': 'CL838420024', # Change by camera serial numper
             'device_num': '2',
             'depth_registration': 'true',
             'color_fps': '15',
@@ -34,8 +34,8 @@ def generate_launch_description():
         ),
         launch_arguments={
             'camera_name': 'hand',
-            'usb_port': '2-3.4',    # Change by camera port
-            'serial_number': 'AY35C3200YL',# Change by camera serial numper
+            'usb_port': '1-4.2 ',    # Change by camera port
+            'serial_number': 'AY37943026N',# Change by camera serial numper
             'device_num': '2',
             'depth_registration': 'true',
             'color_fps': '15',

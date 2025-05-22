@@ -15,7 +15,7 @@ def generate_launch_description():
             os.path.join(launch_file_dir, 'xarm7_driver.launch.py')
         ),
         launch_arguments={
-            'robot_ip': '192.168.1.233',
+            'robot_ip': '192.168.2.224',
         }.items()
     )
 

@@ -21,7 +21,7 @@ class LMControlNode(Node):
         self.cmd_lock = Lock()
 
         #TODO change by robots 185
-        self.offset_position = 103.9
+        self.offset_position = 108.0#103.9
         self.glob_speed = 5000
 
         self.elevation_initialize()
