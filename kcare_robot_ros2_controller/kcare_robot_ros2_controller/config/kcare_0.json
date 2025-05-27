@@ -1,0 +1,16 @@
+{
+    "robot_name": "kcare_0",
+    "xarm": {
+        "robot_ip": "192.168.1.245"
+      },
+    "camera": {
+        "femto_serial": "CL8K14100X2",
+        "femto_port": "2-2",
+        "gemini_serial": "AY3N3310006",
+        "gemini_port": "2-3"
+    },
+    "elevation":{
+        "offset": 108,
+        "range": [108,400]
+    }
+}

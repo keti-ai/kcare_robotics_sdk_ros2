@@ -1,0 +1,20 @@
+{
+    "robot_name": "kcare_dure",
+    "xarm": {
+        "robot_ip": "192.168.2.224"
+      },
+    "camera": {
+        "femto_serial": "CL838420024",
+        "femto_port": "2-1",
+        "gemini_serial": "AY37943026N",
+        "gemini_port": "1-4.2"
+    },
+    "elevation":{
+        "offset": 108,
+        "range": [108,400]
+    },
+    "mobile":{
+        "poi": "dure_poi.json",
+        "slam_map": "dure.stcm"
+    }
+}

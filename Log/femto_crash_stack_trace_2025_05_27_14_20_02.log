@@ -1,0 +1,14 @@
+Received signal: 11
+Stack trace (most recent call last):
+#11   Object "[0xffffffffffffffff]", at 0xffffffffffffffff, in 
+#10   Object "/opt/ros/humble/lib/rclcpp_components/component_container", at 0xaaaadace1daf, in 
+#9    Object "/usr/lib/aarch64-linux-gnu/libc.so.6", at 0xffff887874cb, in __libc_start_main
+#8    Object "/usr/lib/aarch64-linux-gnu/libc.so.6", at 0xffff887873fb, in 
+#7    Object "/opt/ros/humble/lib/rclcpp_components/component_container", at 0xaaaadace1bc3, in 
+#6    Object "/opt/ros/humble/lib/rclcpp_components/component_container", at 0xaaaadace1f2f, in 
+#5    Object "/opt/ros/humble/lib/libcomponent_manager.so", at 0xffff88dc6f1f, in rclcpp_components::ComponentManager::~ComponentManager()
+#4    Object "/opt/ros/humble/lib/libcomponent_manager.so", at 0xffff88dc6893, in 
+#3    Object "/workdir/kcare_ros2_wrapper/camera_ws/install/orbbec_camera/lib/liborbbec_camera.so", at 0xffff8259e86f, in orbbec_camera::OBCameraNodeDriver::~OBCameraNodeDriver()
+#2    Object "/workdir/kcare_ros2_wrapper/camera_ws/install/orbbec_camera/lib/liborbbec_camera.so", at 0xffff825bb5c0, in orbbec_camera::OBCameraNode::closeSocSyncPwmTrigger()
+#1    Object "linux-vdso.so.1", at 0xffff88e327bb, in 
+#0    Object "/workdir/kcare_ros2_wrapper/camera_ws/install/orbbec_camera/lib/liborbbec_camera.so", at 0xffff825a4c4f, in signalHandler(int)

@@ -7,10 +7,23 @@ from slamware_ros_sdk.srv import SyncSetStcm
 
 import os
 from ament_index_python.packages import get_package_share_directory
+from kcare_robot_ros2_controller.src.pyutils.config_loader import load_robot_config, get_param
 
 class StcmMapLoaderWithPose(Node):
     def __init__(self):
         super().__init__('stcm_map_loader_with_pose')
+        
+        # JSON config file loading
+        robot_config = load_robot_config(
+            package_name='kcare_robot_ros2_controller', # config 파일이 있는 패키지 이름
+            config_file_env_var='ROBOT_NAME',
+            default_robot_name='default',
+            logger=self.get_logger() # 노드의 로거를 config_loader에 전달
+        )
+        loaded_stcm = get_param(robot_config, ['mobile', 'slam_map'], None, logger=self.get_logger())
+        
+        
+        
         self.cli = self.create_client(SyncSetStcm, '/sync_set_stcm')
         while not self.cli.wait_for_service(timeout_sec=2.0):
             self.get_logger().info('Waiting for sync_set_stcm service...')
@@ -20,7 +33,7 @@ class StcmMapLoaderWithPose(Node):
         try:
             package_share_directory = get_package_share_directory(package_name)
             # Define the path to load the map from within the 'config' folder
-            self.map_load_path = os.path.join(package_share_directory, 'config', 'dure.stcm')
+            self.map_load_path = os.path.join(package_share_directory, 'config', loaded_stcm)
             self.get_logger().info(f"Attempting to load map from: {self.map_load_path}")
         except Exception as e:
             self.get_logger().error(f"Failed to find package directory or set map load path: {e}")
