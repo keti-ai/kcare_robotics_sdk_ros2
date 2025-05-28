@@ -1,16 +1,13 @@
 import rclpy
 from rclpy.node import Node
-
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
-
 
 from slamware_ros_sdk.msg import GoHomeRequest, Line2DFlt32Array
 from geometry_msgs.msg import Twist, PoseStamped, Pose, Point, Quaternion
 from visualization_msgs.msg import Marker
-
 from kcare_robot_ros2_controller_msgs.srv import MobileMoveLabel
-
+from kcare_robot_ros2_controller.src.pyutils.config_loader import load_robot_config, get_param
 import math, os, json
 from ament_index_python.packages import get_package_share_directory
 
@@ -18,18 +15,19 @@ class Mobile_Controller(Node):
     def __init__(self):
         super().__init__('mobile_control_node')
 
-        # 설정 파일 로드
-        # 'your_package_name'을 실제 패키지 이름으로 변경해야 합니다.
-        # 예를 들어, 이 파일이 'my_robot_controller' 패키지 안에 있다면 'my_robot_controller'로 변경
-        package_name = 'kcare_robot_ros2_controller' # <<-- 여기에 실제 패키지 이름을 넣어주세요!
-        try:
-            package_share_directory = get_package_share_directory(package_name)
-            self.config_file_path = os.path.join(package_share_directory, 'config', 'mobile_poi.json') # 파일명도 필요시 수정
-            self.config = self.load_config(self.config_file_path)
-        except Exception as e: # ModuleNotFoundError 등 패키지를 못찾는 경우 포함
-            self.get_logger().error(f"Failed to find package directory or load config: {e}")
-            self.get_logger().error(f"Ensure your package '{package_name}' is correctly built and sourced, and the config file exists at '{package_name}/config/mobile_config.json'.")
-            self.config = None # 설정 로드 실패 시 None으로 초기화
+        # JSON config file loading
+        robot_config = load_robot_config(
+            package_name='kcare_robot_ros2_controller', # config 파일이 있는 패키지 이름
+            config_file_env_var='ROBOT_NAME',
+            default_robot_name='default',
+            logger=self.get_logger() # 노드의 로거를 config_loader에 전달
+        )
+
+        self.poi_filename = get_param(robot_config, ['mobile', 'poi'], None, logger=self.get_logger())
+
+        package_share_directory = get_package_share_directory('kcare_robot_ros2_controller')
+        self.config_file_path = os.path.join(package_share_directory, 'config', self.poi_filename) # 파일명도 필요시 수정
+        self.config = self.load_config(self.config_file_path)
 
         self.topic_sub_group = MutuallyExclusiveCallbackGroup()
         self.srv_callback_group = MutuallyExclusiveCallbackGroup()
@@ -39,19 +37,18 @@ class Mobile_Controller(Node):
             'virtual_wall':('/virtual_walls',Line2DFlt32Array,self.virtual_wall_callback)
         }
 
-        self.topic_subs = {}
-        for topic_tag, (topic_name, topic_type,topic_callback_fun) in TOPIC_SUBS.items():
-            self.topic_subs[topic_tag] = self.create_subscription(topic_type,topic_name,topic_callback_fun,10,callback_group=self.topic_sub_group)
-            self.get_logger().info(f"Subscriber created: {topic_tag} -> {topic_name} with {topic_callback_fun}")
-
-
         TOPIC_PUBS = {
             'cmd_vel':('/cmd_vel',Twist),
             'goal_pose':('/move_base_simple/goal',PoseStamped),
             'go_home':('/slamware_ros_sdk_server_node/go_home',GoHomeRequest),
             'virtual_marker':('/virtual_marker',Marker),
         }
-
+        
+        self.topic_subs = {}
+        for topic_tag, (topic_name, topic_type,topic_callback_fun) in TOPIC_SUBS.items():
+            self.topic_subs[topic_tag] = self.create_subscription(topic_type,topic_name,topic_callback_fun,10,callback_group=self.topic_sub_group)
+            self.get_logger().info(f"Subscriber created: {topic_tag} -> {topic_name} with {topic_callback_fun}")
+        
         # 퍼블리셔 등록
         self.topic_pubs = {}
         for topic_tag, (topic_name, topic_type) in TOPIC_PUBS.items():
@@ -59,25 +56,6 @@ class Mobile_Controller(Node):
             self.get_logger().info(f"Publisher created: {topic_tag} -> {topic_name}")
 
         self.service_client = self.create_service(MobileMoveLabel,'mobile/goal_pose',self.service_callback_pose, callback_group=self.srv_callback_group)
-
-    def load_config(self, config_path):
-        """
-        지정된 JSON 설정 파일을 로드합니다.
-        """
-        if not os.path.exists(config_path):
-            self.get_logger().error(f"Config file not found at {config_path}")
-            return None
-        try:
-            with open(config_path, 'r') as f:
-                config_data = json.load(f)
-            # self.get_logger().info(f"Successfully loaded config from {config_path}: {config_data}")
-            return config_data
-        except json.JSONDecodeError as e:
-            self.get_logger().error(f"Failed to parse JSON config file {config_path}: {e}")
-            return None
-        except Exception as e:
-            self.get_logger().error(f"An unexpected error occurred while loading config file {config_path}: {e}")
-            return None
 
     def publish_goal_pose(self, point_x, point_y, target_yaw):
         goal = PoseStamped()
@@ -106,7 +84,6 @@ class Mobile_Controller(Node):
         msg=GoHomeRequest()
         self.topic_pubs['go_home'].publish(msg)
 
-
     def robot_pose_callback(self, msg: PoseStamped):
         # 위치
         x = msg.pose.position.x
@@ -118,10 +95,6 @@ class Mobile_Controller(Node):
         qy = msg.pose.orientation.y
         qz = msg.pose.orientation.z
         qw = msg.pose.orientation.w
-
-        # 로그 출력 (또는 변수 저장)
-        #self.get_logger().info(f"[Robot Pose] Position: x={x:.2f}, y={y:.2f}, z={z:.2f} | qx={qx:.2f} qy={qy:.2f}, qz={qz:.2f}, qw={qw:.2f}")
-
 
     def virtual_wall_callback(self, msg):
         for line in msg.lines:
@@ -157,18 +130,36 @@ class Mobile_Controller(Node):
 
         self.topic_pubs["virtual_marker"].publish(marker)
 
+    def load_config(self, config_path):
+        """
+        지정된 JSON 설정 파일을 로드합니다.
+        """
+        if not os.path.exists(config_path):
+            self.get_logger().error(f"Config file not found at {config_path}")
+            return None
+        try:
+            with open(config_path, 'r') as f:
+                config_data = json.load(f)
+            # self.get_logger().info(f"Successfully loaded config from {config_path}: {config_data}")
+            return config_data
+        except json.JSONDecodeError as e:
+            self.get_logger().error(f"Failed to parse JSON config file {config_path}: {e}")
+            return None
+        except Exception as e:
+            self.get_logger().error(f"An unexpected error occurred while loading config file {config_path}: {e}")
+            return None
+
     def service_callback_pose(self, request: MobileMoveLabel.Request, response: MobileMoveLabel.Response):
         if self.config is None or "locations" not in self.config:
             self.get_logger().error("Configuration not loaded or 'locations' key missing. Cannot process request.")
             response.successed = False
-            response.message = "Server configuration error."
             return response
-
+        
         target_label = request.label.lower() # 요청된 레이블을 소문자로 변환
         self.get_logger().info(f"Received move request for label: '{target_label}'")
 
         locations = self.config.get("locations", {}) # locations 키가 없을 경우 빈 dict 반환
-
+        
         if target_label in locations:
             action_config = locations[target_label]
             action_type = action_config.get("type")
