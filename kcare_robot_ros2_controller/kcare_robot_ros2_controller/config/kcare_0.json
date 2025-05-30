@@ -10,7 +10,7 @@
         "gemini_port": "2-3"
     },
     "elevation":{
-        "offset": 108,
-        "range": [108,400]
+        "offset": 183,
+        "range": [188,935]
     }
 }
