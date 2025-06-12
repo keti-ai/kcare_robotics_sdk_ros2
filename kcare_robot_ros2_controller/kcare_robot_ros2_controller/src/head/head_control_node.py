@@ -51,7 +51,7 @@ class HeadControlNode(Node):
         self.service_client = self.create_service(HeadPoseCommand,'head/pose_command',self.service_callback_pose, callback_group=self.group1)
 
 
-        self.timer_state = self.create_timer(0.05, self.timer_callback_state)
+        self.timer_state = self.create_timer(0.1, self.timer_callback_state)
 
     def set(self):
         self.dxl = Dynamixel(self.get_logger())

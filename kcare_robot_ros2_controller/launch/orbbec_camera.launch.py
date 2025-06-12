@@ -47,7 +47,7 @@ def generate_launch_description():
             'enable_point_cloud': 'true',
             'publish_tf': 'false',
             'cloud_frame_id': 'femto_depth_optical_frame',
-            'enable_colored_point_cloud': 'true',
+            'enable_colored_point_cloud': 'false',
         }.items()
     )
 
@@ -67,7 +67,7 @@ def generate_launch_description():
             'enable_point_cloud': 'true',
             'publish_tf': 'false',
             'cloud_frame_id': 'hand_depth_optical_frame',
-            'enable_colored_point_cloud': 'true',
+            'enable_colored_point_cloud': 'false',
         }.items()
     )
 
