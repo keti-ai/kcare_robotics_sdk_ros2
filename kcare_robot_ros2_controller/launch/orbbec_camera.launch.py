@@ -42,8 +42,8 @@ def generate_launch_description():
             'serial_number': femto_serial, # JSON에서 로드된 값
             'device_num': '2', # 이 값은 config 파일에서 관리하지 않는다면 고정 또는 다른 방법으로 관리
             'depth_registration': 'true',
-            'color_fps': '15',
-            'depth_fps': '15',
+            'color_fps': '5',
+            'depth_fps': '5',
             'enable_point_cloud': 'true',
             'publish_tf': 'false',
             'cloud_frame_id': 'femto_depth_optical_frame',
@@ -64,6 +64,8 @@ def generate_launch_description():
             'depth_registration': 'true',
             'color_fps': '5',
             'depth_fps': '5',
+            'color_width': '640',
+            'color_height': '480',
             'enable_point_cloud': 'true',
             'publish_tf': 'false',
             'cloud_frame_id': 'hand_depth_optical_frame',
