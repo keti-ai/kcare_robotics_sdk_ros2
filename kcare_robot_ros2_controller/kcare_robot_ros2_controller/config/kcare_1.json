@@ -5,7 +5,7 @@
       },
     "camera": {
         "femto_serial": "CL8764100X2",
-        "femto_port": "2-3.2",
+        "femto_port": "2-3.1",
         "gemini_serial": "AY35C3200YL",
         "gemini_port": "2-3.4"
     },
