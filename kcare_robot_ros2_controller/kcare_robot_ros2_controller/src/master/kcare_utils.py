@@ -59,7 +59,7 @@ class RobotUtils:
             'set_state': ('/xarm/set_state', SetInt16),
             'clean_error': ('/xarm/clean_error', Call),
             'elevation_command' : ('/elevation/set_position',ElevationCommand),
-            #'gripper_command' : ('/gripper/command',GripperCommand),
+            'gripper_command' : ('/gripper/command',GripperCommand),
             'head_command' : ('/head/pose_command',HeadPoseCommand),
             'set_xarm_tool_baud' : ('/xarm/set_tgpio_modbus_baudrate',SetInt32),
             'set_xarm_tool_timeout' : ('/xarm/set_tgpio_modbus_timeout',SetModbusTimeout),
