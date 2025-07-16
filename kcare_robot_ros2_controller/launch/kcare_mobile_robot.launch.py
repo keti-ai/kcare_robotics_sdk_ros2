@@ -72,7 +72,7 @@ def generate_launch_description():
     ld = LaunchDescription([
         GroupAction([launch1_include]),
         GroupAction([launch2_include]),
-        GroupAction([launch3_include]),
+        #GroupAction([launch3_include]),
         GroupAction([launch4_include]),
         mobile_node,
     ])
