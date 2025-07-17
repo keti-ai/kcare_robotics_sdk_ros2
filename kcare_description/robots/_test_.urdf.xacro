@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<robot name="kcare" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find kcare_description)/robots/device_xarm7.urdf.xacro"/>
+
+  <link name="camera_jig_link">
+    <inertial>
+      <origin xyz="-8.598579777854654e-07 0.017055113346198712 0.011007561884493457" rpy="0 0 0"/>
+      <mass value="0.45734749011427217"/>
+      <inertia ixx="0.000452" iyy="0.00018" izz="0.000548" ixy="0.0" iyz="-8.7e-05" ixz="0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://kcare_description/meshes/tools/camera_jig.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://kcare_description/meshes/tools/camera_jig.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="fix_joint" type="fixed">
+    <parent link="link_eef"/>
+    <child link="camera_jig_link"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+  </joint>
+
+</robot>

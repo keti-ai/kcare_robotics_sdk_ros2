@@ -4,6 +4,7 @@ project(kcare_description)
 find_package(ament_cmake REQUIRED)
 find_package(xacro REQUIRED)
 find_package(rviz2 REQUIRED)
+find_package(xarm_description REQUIRED)
 
 # Install launch files.
 install(DIRECTORY

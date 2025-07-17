@@ -23,14 +23,14 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     manipulator_xacro_file = os.path.join(get_package_share_directory('kcare_description'), 'robots',
-                                     'kcare_base.xacro')
+                                     'kcare_platform.urdf.xacro')
 
     robot_description = Command(
         [FindExecutable(name='xacro'), ' ', manipulator_xacro_file])
 
 
     rviz_file = os.path.join(get_package_share_directory('kcare_description'), 'rviz',
-                             'visualize_robot.rviz')
+                             'robot_config.rviz')
 
     return LaunchDescription([
         Node(
@@ -38,14 +38,14 @@ def generate_launch_description():
             executable='robot_state_publisher',
             name='robot_state_publisher',
             output='screen',
-            namespace='robot1',
+            namespace='',
             parameters=[{'robot_description': robot_description}],
         ),
         Node(
             package='joint_state_publisher_gui',
             executable='joint_state_publisher_gui',
             name='joint_state_publisher_gui',
-            namespace='robot1',
+            namespace='',
         ),
         Node(package='rviz2',
              executable='rviz2',

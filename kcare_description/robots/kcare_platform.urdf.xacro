@@ -26,7 +26,7 @@
     inertial_origin="-0.055338 0.000517 0.929017"
     mass="0.442703"
     ixx="0.000091" iyy="0.000123" izz="0.000123" ixy="-0.000000" iyz="0.000002" ixz="0.000000"
-    mesh_file="${mesh_path}/elevation/rz_pantilt.stl"
+    mesh_file="${mesh_path}/pan_tilt/rz_pantilt.stl"
   />
 
   <xacro:common_link
@@ -34,11 +34,24 @@
     inertial_origin="-0.043338 -0.000000 0.966173"
     mass="0.053319"
     ixx="0.000032" iyy="0.000020" izz="0.000019" ixy="0.000000" iyz="-0.000000" ixz="0.000000"
-    mesh_file="${mesh_path}/elevation/ry_pantilt.stl"
+    mesh_file="${mesh_path}/pan_tilt/ry_pantilt.stl"
   />
 
 
-  <xacro:include filename="$(find kcare_description)/robots/slamware.xacro"/>
+  <xacro:include filename="$(find kcare_description)/robots/slamware.urdf.xacro"/>
+  <xacro:include filename="$(find kcare_description)/robots/femto_bolt.urdf.xacro"/>
+  <xacro:include filename="$(find kcare_description)/robots/xarm7.urdf.xacro"/>
+
+
+  <!-- <xacro:include filename="$(find xarm_description)/urdf/xarm_device_macro.xacro" />
+  <xacro:xarm_device 
+      dof="7"
+      attach_to="linear_block" 
+      attach_xyz="0.151662 0.0 -0.009"
+      attach_rpy="0 0 ${-90 * pi/180}"
+      add_gripper="true"
+  /> -->
+
 
   <joint name="slam_to_base" type="fixed">
     <parent link="slam_base"/>
@@ -46,21 +59,18 @@
     <origin xyz="0.0 0.0 0.362985" rpy="0 0 0"/>
   </joint>
 
-  <xacro:include filename="$(find xarm_description)/urdf/xarm_device_macro.xacro" />
-
-  <xacro:xarm_device 
-      dof="7"
-      attach_to="linear_block" 
-      attach_xyz="0.151662 0.0 -0.009"
-      attach_rpy="0 0 ${-90 * pi/180}"
-  />
-
   <joint name="elevation_joint" type="prismatic">
-    <origin xyz="0.0 0.0 0.1" rpy="0 0 0"/>
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
     <parent link="elevation_base"/>
     <child link="linear_block"/>
     <axis xyz="0.0 0.0 1.0"/>
-    <limit upper="0.65" lower="0.0" effort="100" velocity="100"/>
+    <limit upper="0.68" lower="0.1" effort="100" velocity="100"/>
+  </joint>
+
+  <joint name="lm_to_arm" type="fixed">
+    <parent link="linear_block"/>
+    <child link="arm_base"/>
+    <origin xyz="0.151662 0.0 -0.009" rpy="0 0 ${-90 * pi/180}"/>
   </joint>
 
   <joint name="rz_joint" type="revolute">
@@ -86,5 +96,12 @@
       effort="30"
       velocity="3.14" />
   </joint>
+
+  <joint name="pantilt_camera_fix_joint" type="fixed">
+    <parent link="ry_pantilt"/>
+    <child link="femto_base_link"/>
+    <origin xyz="0.0 0.055 0.0" rpy="-1.5708 0 0"/>
+  </joint>
+
 
 </robot>

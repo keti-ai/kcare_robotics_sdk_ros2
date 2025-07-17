@@ -1,5 +1,9 @@
 # kcare_robot_ros2_sdk
 모바일 매니퓰레이터 로봇 제어부 ROS2 SDK(ROS2 Humble)
+
+(URDF 파일은 kcare_description에서 확인 가능)
+
+
 ## 1. Preparation
 
 * Ubuntu 22.04 + ROS2 Humble 혹은 도커 컨테이너
