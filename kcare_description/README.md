@@ -38,6 +38,8 @@
     source ~/xarm_ws/install/setup.bash
     source ~/kcare_ws/install/setup.bash
     ros2 launch kcarebot_description robot_display.launch.py
+    
+<img width="1827" height="1055" alt="image" src="https://github.com/user-attachments/assets/e68209c0-6928-4ed0-95b1-cd20416f46b1" />
 
 ## 5. URDF to Xacro
 
