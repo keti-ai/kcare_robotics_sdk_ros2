@@ -38,13 +38,13 @@ def generate_launch_description():
         ),
 
         # Device Server Node
-        Node(
-            package='kcare_robot_ros2_controller',
-            executable='device_node',
-            name='device_node',
-            output='screen',
-            parameters=[{
-                # 필요한 경우 파라미터를 추가하세요
-            }]
-        ),
+        #Node(
+            #package='kcare_robot_ros2_controller',
+            #executable='device_node',
+            #name='device_node',
+            #output='screen',
+            #parameters=[{
+                ## 필요한 경우 파라미터를 추가하세요
+            #}]
+        #),
     ])
