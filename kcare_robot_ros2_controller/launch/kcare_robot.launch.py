@@ -3,9 +3,9 @@ import json
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
+
 from launch.launch_description_sources import PythonLaunchDescriptionSource, AnyLaunchDescriptionSource
 from launch_ros.actions import Node
-from launch.substitutions import EnvironmentVariable
 from kcare_robot_ros2_controller.src.pyutils.config_loader import load_robot_config, get_param
 
 def generate_launch_description():
@@ -18,6 +18,7 @@ def generate_launch_description():
     xarm_ip_value = get_param(robot_config, ['xarm', 'robot_ip'], '192.168.1.1')
     print(f"[LAUNCH] Loaded robot_ip: {xarm_ip_value}") # 런치 시스템 로그 대신 직접 출력
     
+
     # Include launch files
     xarm_package_dir = get_package_share_directory('xarm_api')
     xarm_launch_file_dir = os.path.join(xarm_package_dir, 'launch')

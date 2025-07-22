@@ -1,3 +1,0 @@
-from carerobotapp.configs.device_clients import DEVICE_CLIENT_CONFIGS
-from pyconnect.ros.utils import device_sub2server_run
-device_sub2server_run(configs=DEVICE_CLIENT_CONFIGS, run_thread=False)

@@ -3,6 +3,8 @@ from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
+from tf2_ros import TransformBroadcaster
+from geometry_msgs.msg import TransformStamped
 from slamware_ros_sdk.msg import GoHomeRequest, Line2DFlt32Array, RobotBasicState
 from geometry_msgs.msg import Twist, PoseStamped, Pose, Point, Quaternion
 from visualization_msgs.msg import Marker
@@ -10,7 +12,6 @@ from kcare_robot_ros2_controller_msgs.srv import MobileMoveLabel
 from kcare_robot_ros2_controller.src.pyutils.config_loader import load_robot_config, get_param
 import math, os, json, time
 from ament_index_python.packages import get_package_share_directory
-
 
 
 class Mobile_Controller(Node):
@@ -78,6 +79,7 @@ class Mobile_Controller(Node):
         
         self.is_charging = False
         
+        self.tf_broadcaster = TransformBroadcaster(self)
 
     def publish_goal_pose(self, point_x, point_y, target_yaw):
         goal = PoseStamped()
@@ -196,6 +198,24 @@ class Mobile_Controller(Node):
 
 
         self.topic_pubs["virtual_marker"].publish(marker)
+        
+        
+        t = TransformStamped()
+        t.header.stamp = self.get_clock().now().to_msg()
+        t.header.frame_id = 'laser'    # 부모 프레임은 robot_pose
+        t.child_frame_id = 'slam_base'      # 자식 프레임은 slam_base
+
+        # offset 없이 동일하게 설정
+        t.transform.translation.x = 0.0
+        t.transform.translation.y = 0.0
+        t.transform.translation.z = 0.085
+        t.transform.rotation.x = 0.0
+        t.transform.rotation.y = 0.0
+        t.transform.rotation.z = 0.0
+        t.transform.rotation.w = 1.0
+
+        self.tf_broadcaster.sendTransform(t)
+
 
     def robot_state_callback(self, msg: RobotBasicState):
         self.is_charging=msg.is_charging
