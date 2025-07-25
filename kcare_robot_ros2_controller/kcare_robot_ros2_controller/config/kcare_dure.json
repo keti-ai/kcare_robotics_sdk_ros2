@@ -1,7 +1,7 @@
 {
     "robot_name": "kcare_dure",
     "xarm": {
-        "robot_ip": "192.168.2.224"
+        "robot_ip": "192.168.1.224"
       },
     "camera": {
         "femto_serial": "CL838420024",
