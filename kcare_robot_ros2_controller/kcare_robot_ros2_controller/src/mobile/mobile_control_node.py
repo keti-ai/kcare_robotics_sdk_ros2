@@ -343,8 +343,8 @@ class Mobile_Controller(Node):
                             elif not self.get_moving() and not self.is_goal_reached(x, y, theta):
                                 self.get_logger().warn(f"Robot stopped but not at target. Target: ({x:.2f}, {y:.2f}), Current: ({self.current_robot_pose.pose.position.x:.2f}, {self.current_robot_pose.pose.position.y:.2f}).")
                                 # 목표 도달 실패 시 처리 로직 추가 (예: 재시도, 에러 응답 등)
-                                response.successed = False
-                                return response
+                                #response.successed = False
+                                #return response
                         response.successed = True
                     else:
                         response.successed = True
