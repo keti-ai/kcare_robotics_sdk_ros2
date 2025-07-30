@@ -22,8 +22,8 @@ class HeadControlNode(Node):
         self.device_speed = [40, 40] # step
         self.device_deg_offset = [180, 180]
         
-        self.target_rz=0.0
-        self.target_ry=0.0
+        self.target_rz=0
+        self.target_ry=0
 
         self.cur_rz=0.0
         self.cur_ry=0.0
@@ -69,33 +69,45 @@ class HeadControlNode(Node):
         self.dxl.go_home()
 
     def topic_callback_move(self, msg):
+        self.dxl.control_mode = msg.control_type
+        
         if msg.control_type == 'position':
-            rz = -int(msg.rz)
-            ry = -int(msg.ry)
+            rz = int(msg.rz)
+            ry = int(msg.ry)
+            
             
             self.update_target_pose(rz, ry)
-            
+            # self.get_logger().info(f"{self.target_rz}, {self.target_ry}")    
+            self.dxl.position_control(self.target_rz, self.target_ry)
+
         elif msg.control_type == 'velocity':
             rz = int(msg.rz)
             ry = int(msg.ry)
 
             self.update_target_pose(rz, ry)
+            self.dxl.velocity_control(self.target_rz, self.target_ry)
+        
 
     def topic_callback_go_home(self, msg):
         if msg:
-            #self.dxl.go_home()
-            self.update_target_pose(0.0,0.0)
+            self.dxl.go_home()
+            self.reset_target_pose()
 
 
     def service_callback_pose(self, request, response):
         """
         ✅ 요청된 rz, ry 값으로 모터를 이동시키고, 목표 위치에 도달하면 응답 반환
         """
+        self.dxl.control_mode = 'position'
+
         target_rz = -int(request.rz)
         target_ry = -int(request.ry)
-
-        # ✅ 모터 이동 명령 실행
+        
+        self.reset_target_pose()
         self.update_target_pose(target_rz, target_ry)
+        
+        # self.get_logger().info(f"{self.target_rz}, {self.target_ry}")   
+        self.dxl.position_control(self.target_rz, self.target_ry)
 
         # 비동기 완료 처리
         if not request.wait:
@@ -109,7 +121,7 @@ class HeadControlNode(Node):
 
         while time.time() - start_time < timeout:
             # ✅ 목표 위치 도달 여부 확인
-            if abs(self.cur_rz + target_rz) <= tolerance and abs(self.cur_ry + target_ry) <= tolerance:
+            if abs(self.cur_rz + self.target_rz) <= tolerance and abs(self.cur_ry + self.target_ry) <= tolerance:
                 response.successed = True
                 return response  # ✅ 도달 시 바로 응답 반환
 
@@ -118,20 +130,21 @@ class HeadControlNode(Node):
         # ✅ 시간 초과 시 실패 처리
         response.successed = False
         return response
+    
+    def reset_target_pose(self):
+        self.target_ry = 0
+        self.target_rz = 0
 
     def update_target_pose(self,target_rz,target_ry):
-        self.target_rz=target_rz
-        self.target_ry=target_ry
+        self.target_rz = max(min(self.target_rz + target_rz, 60), -60)
+        self.target_ry = max(min(self.target_ry + target_ry, 40), -35)
 
     def update_current_pose(self):
         cur_rz = self.dxl.get_pose(1)
         cur_ry = self.dxl.get_pose(2)
         return cur_rz, cur_ry
 
-
-
     def timer_callback_state(self):
-        self.dxl.position_control(self.target_rz, self.target_ry)
         self.cur_rz, self.cur_ry = self.update_current_pose()
 
         state_msg = HeadState()
