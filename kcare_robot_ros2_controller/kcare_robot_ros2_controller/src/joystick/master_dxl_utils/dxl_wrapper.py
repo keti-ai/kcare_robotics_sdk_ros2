@@ -13,19 +13,20 @@ from dynamixel_sdk.robotis_def import (
 from typing import Sequence
 import numpy as np
 
-# 조인트 각도 범위 (예시)
-JOINT_LIMITS_DEG = {
-    0: (90-50, 90+35),  # Joint 0: min, max
-    1: (0-5, 0+110),  # Joint 1: min, max
-    2: (0-90, 0+90),  # Joint 2: min, max
-    3: (0, 0+135),  # Joint 3: min, max
-    4: (0-100, 0+100),  # Joint 4: min, max
-    5: (0-92, 0+95),  # Joint 5: min, max
-    6: (0-135, 0+135),  # Joint 6: min, max
-    7: (-30, 0) # Gripper min, max
-}
+# # 조인트 각도 범위 (예시)
+# JOINT_LIMITS_DEG = {
+#     0: (90-50, 90+35),  # Joint 0: min, max
+#     1: (0-5, 0+110),  # Joint 1: min, max
+#     2: (0-90, 0+90),  # Joint 2: min, max
+#     3: (0, 0+135),  # Joint 3: min, max
+#     4: (0-100, 0+100),  # Joint 4: min, max
+#     5: (0-92, 0+95),  # Joint 5: min, max
+#     6: (0-135, 0+135),  # Joint 6: min, max
+#     7: (-30, 0) # Gripper min, max
+# }
 
-JOINT_LIMITS = {i: np.deg2rad(limits) for i, limits in JOINT_LIMITS_DEG.items()}
+
+
 
 # Constants
 ADDR_TORQUE_ENABLE = 64

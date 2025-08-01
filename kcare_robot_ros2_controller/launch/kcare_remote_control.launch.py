@@ -28,6 +28,16 @@ def generate_launch_description():
                 # 필요한 경우 파라미터를 추가하세요
             }]
         ),
+        # Master Dynamixel Node
+        Node(
+            package='kcare_robot_ros2_controller',
+            executable='master_dxl_node',
+            name='master_dxl_node',
+            output='screen',
+            parameters=[{
+                # 필요한 경우 파라미터를 추가하세요
+            }]
+        ),
         # Joy Node for Joystick
         Node(
             package='joy',

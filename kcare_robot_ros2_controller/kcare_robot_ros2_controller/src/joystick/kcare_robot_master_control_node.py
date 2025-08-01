@@ -1,41 +1,44 @@
 from rclpy.executors import MultiThreadedExecutor
 
+from sensor_msgs.msg import JointState
 from kcare_robot_ros2_controller.src.master.kcare_utils import *
 from kcare_robot_ros2_controller.src.joystick.master_dxl_utils.dxl_wrapper import *
 
 import time
 
+JOINT_LIMITS_DEG = {
+    0: (90-50, 90+35),  # Joint 0: min, max
+    1: (15-20, 15+110),  # Joint 1: min, max
+    2: (0-90, 0+90),  # Joint 2: min, max
+    3: (0, 0+135),  # Joint 3: min, max
+    4: (-180-100, 180+100),  # Joint 4: min, max
+    5: (0-92, 0+95),  # Joint 5: min, max
+    6: (-90-135, -90+135),  # Joint 6: min, max
+    7: (-30, 0) # Gripper min, max
+}
+
+JOINT_LIMITS = {i: np.deg2rad(limits) for i, limits in JOINT_LIMITS_DEG.items()}
+
+
 class KcareRobotRemoteControlNode(Node):
     def __init__(self):
         super().__init__('kcare_master')
         self.rbutils=RobotUtils(self)
-        self.driver = None
-        self.timer_callback_group = MutuallyExclusiveCallbackGroup()
         
-        self.dxl_init()
+        self.topic_callback_grp=MutuallyExclusiveCallbackGroup()
 
-        timer_period = 0.02
-        self.timer = self.create_timer(timer_period, self.timer_callback,callback_group=self.timer_callback_group)
+        self.master_joint_subscriber=self.create_subscription(
+            JointState,
+            '/master/joint_states',
+            self.master_callback,
+            1,callback_group=self.topic_callback_grp)
 
         self.chk_joint_home=False
         self.ready_arm=False
-
         
-
-
-    def dxl_init(self):
-        self.driver = RemoteDynamixelWrapper('/dev/ttyUSB0', 57600, [1, 2, 3, 4, 5, 6, 7, 8])
-        self.driver.set_target_current(30)
-        self.driver.set_torque_mode(True)
-        target_pose = RobotParam.arm_ready
-        target_pose.append(0.0)
-        self.driver.set_target_joint(target_pose)
-
-
 
     def rb_init(self):
         # ROS Spin wait
-        time.sleep(1)
         self.rbutils.call_motion_enable(8, 1)
         #로봇팔 포지션 제어모드
         self.rbutils.call_set_mode(0)
@@ -46,26 +49,29 @@ class KcareRobotRemoteControlNode(Node):
         self.rbutils.call_set_mode(6)
         self.rbutils.call_set_state(0)
         
-
-
-        self.rbutils.call_elevation_command(RobotParam.elev_home)
         self.get_logger().info('RB Init Done')
         self.ready_arm=True
 
-
-    def check_joint_home(self):
-        dxl_angle=self.driver.read_only_joints()[0]
-        robot_angle=self.rbutils.get_robot_pose()['joint']
-        #self.get_logger().info(f"Dynamixel : {dxl_angle}, Robot : {robot_angle}")
+    def check_joint_home(self,dxl_angles):
+        robot_angle=RobotParam.arm_ready
         max_joint_delta = 0.3
-        abs_deltas = np.abs(robot_angle - dxl_angle)
+        abs_deltas = np.abs(robot_angle - dxl_angles)
         id_max_joint_delta = np.argmax(abs_deltas)
         if abs_deltas[id_max_joint_delta] < max_joint_delta:
             self.get_logger().info(f"Ready For teleop")
             self.chk_joint_home=True
         else:
             self.get_logger().info(f"ABS : {abs_deltas}")
+            
+    def remote_control(self,robot_angle,gripper_pose):
         
+        self.get_logger().info(f"Target Angle : {robot_angle}, Target Gripper : {gripper_pose}")
+
+        self.rbutils.call_set_servo_angle(list(robot_angle),speed=1.5,acc=10.0,wait=False)
+
+        self.rbutils.call_gripper_command(int(gripper_pose),50)
+
+
     def clamp_joint_angles(self, angles):
         """각도를 허용된 범위로 클램핑"""
         # 입력 각도가 리스트일 경우 numpy 배열로 변환
@@ -95,33 +101,33 @@ class KcareRobotRemoteControlNode(Node):
         
         return mapped_value
 
-    def remote_control(self):
-        target_robot_angle, target_robot_gripper=self.driver.read_only_joints()
 
-        target_robot_angle = list(self.clamp_joint_angles(target_robot_angle))
-        target_robot_gripper = int(self.convert_angle_to_gripper(target_robot_gripper))
-        self.get_logger().info(f"Target Angle : {target_robot_angle}, Target Gripper : {target_robot_gripper}")
-
-        self.rbutils.call_set_servo_angle(target_robot_angle,speed=1.5,acc=10.0,wait=False)
-
-        self.rbutils.call_gripper_command(target_robot_gripper,50)
-
-
-    def timer_callback(self):
+    def master_callback(self,msg):
+        
         if not self.ready_arm:
             self.rb_init()
             return
+        
+        self.get_logger().info(f"--- Received JointState ---")
+        self.get_logger().info(f"Timestamp: {msg.header.stamp.sec}.{msg.header.stamp.nanosec}")
+        
+        target_robot_angle=self.clamp_joint_angles(msg.position[0:7])
+        target_robot_gripper=self.convert_angle_to_gripper(msg.position[7])
+        
+        
+        self.get_logger().info(f"Position: {target_robot_angle}")
+        self.get_logger().info(f"Gripper: {target_robot_gripper}")
+        
         if not self.chk_joint_home:
-            self.check_joint_home()
+            self.check_joint_home(target_robot_angle)
         else:
-            self.remote_control()
+            self.remote_control(target_robot_angle,target_robot_gripper)
 
     def terminator(self):
         #self.rbutils.call_set_mode(0,wait=False)
         #time.sleep(0.1)
         #self.rbutils.call_set_mode(0,wait=False)
-        self.rbutils.call_set_servo_angle(RobotParam.arm_home,wait=False)
-        self.driver.set_torque_mode(False)
+        self.rbutils.call_set_servo_angle(RobotParam.arm_ready,wait=False)
         #self.driver.close()
 
 def main(args=None):
