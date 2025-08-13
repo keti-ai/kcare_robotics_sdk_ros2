@@ -8,7 +8,7 @@ from geometry_msgs.msg import TransformStamped
 from slamware_ros_sdk.msg import GoHomeRequest, Line2DFlt32Array, RobotBasicState
 from geometry_msgs.msg import Twist, PoseStamped, Pose, Point, Quaternion
 from visualization_msgs.msg import Marker
-from kcare_robot_ros2_controller_msgs.srv import MobileMoveLabel
+from kcare_robot_ros2_controller_msgs.srv import MobileMoveLabel, MobileDirectPose
 from kcare_robot_ros2_controller.src.pyutils.config_loader import load_robot_config, get_param
 import math, os, json, time
 from ament_index_python.packages import get_package_share_directory
@@ -60,6 +60,8 @@ class Mobile_Controller(Node):
             self.get_logger().info(f"Publisher created: {topic_tag} -> {topic_name}")
 
         self.service_client = self.create_service(MobileMoveLabel,'mobile/goal_pose',self.service_callback_pose, callback_group=self.srv_callback_group)
+
+        self.service_direct_client = self.create_service(MobileDirectPose,'mobile/direct_pose',self.service_callback_direct_pose, callback_group=self.srv_callback_group)
 
         # --- Variables for pose tracking and movement detection ---
         self.current_robot_pose = None
@@ -298,6 +300,29 @@ class Mobile_Controller(Node):
             # self.get_logger().debug(f"Goal not reached. Linear error: {distance_error:.2f}/{self.goal_tolerance_xy:.2f}, Angular error: {math.degrees(angular_error):.2f}/{math.degrees(self.goal_tolerance_yaw):.2f}")
             return False
         
+        
+    def service_callback_direct_pose(self,request:MobileDirectPose.Request, response: MobileDirectPose.Response):
+        self.publish_goal_pose(request.pose_x, request.pose_y, request.pose_yaw)
+        if request.wait:
+            time.sleep(1) # 목표 전송 후 잠시 대기
+            while True:
+                time.sleep(0.5)
+                # ✅ 로봇이 움직이는지 여부와 목표 도달 여부를 동시에 확인
+                # ✅ is_goal_reached 함수에 목표 위치(x, y, theta)를 직접 전달
+                if not self.get_moving() and self.is_goal_reached(request.pose_x, request.pose_y, request.pose_yaw):
+                    self.get_logger().info(f"Direct Moving Complete: Reached target pose ({request.pose_x:.2f}, {request.pose_y:.2f}, {math.degrees(request.pose_yaw):.2f} deg).")
+                    break
+                elif not self.get_moving() and not self.is_goal_reached(request.pose_x, request.pose_y, request.pose_yaw):
+                    self.get_logger().warn(f"Robot stopped but not at target. Target: ({request.pose_x:.2f}, {request.pose_y:.2f}), Current: ({self.current_robot_pose.pose.position.x:.2f}, {self.current_robot_pose.pose.position.y:.2f}).")
+                    # 목표 도달 실패 시 처리 로직 추가 (예: 재시도, 에러 응답 등)
+                    #response.successed = False
+                    #return response
+            response.successed = True
+        else:
+            response.successed = True
+        return response
+    
+    
     def service_callback_pose(self, request: MobileMoveLabel.Request, response: MobileMoveLabel.Response):
         if self.config is None or "locations" not in self.config:
             self.get_logger().error("Configuration not loaded or 'locations' key missing. Cannot process request.")
@@ -308,6 +333,7 @@ class Mobile_Controller(Node):
         self.get_logger().info(f"Received move request for label: '{target_label}'")
 
         locations = self.config.get("locations", {}) # locations 키가 없을 경우 빈 dict 반환
+        
         
         if target_label in locations:
             action_config = locations[target_label]
@@ -326,9 +352,9 @@ class Mobile_Controller(Node):
                     response.successed = True
 
             elif action_type == "pose":
-                x = action_config.get("x")
-                y = action_config.get("y")
-                theta = action_config.get("theta")
+                x = action_config.get("x") + request.offset_x
+                y = action_config.get("y") + request.offset_y
+                theta = action_config.get("theta") + request.offset_yaw
                 if x is not None and y is not None and theta is not None:
                     self.publish_goal_pose(x, y, theta)
                     if request.wait:
@@ -358,60 +384,6 @@ class Mobile_Controller(Node):
             self.get_logger().warn(f"Label '{target_label}' not found in configuration.")
             response.successed = False
         return response
-
-'''    def service_callback_pose(self, request: MobileMoveLabel.Request, response: MobileMoveLabel.Response):
-        if self.config is None or "locations" not in self.config:
-            self.get_logger().error("Configuration not loaded or 'locations' key missing. Cannot process request.")
-            response.successed = False
-            return response
-        
-        target_label = request.label.lower() # 요청된 레이블을 소문자로 변환
-        self.get_logger().info(f"Received move request for label: '{target_label}'")
-
-        locations = self.config.get("locations", {}) # locations 키가 없을 경우 빈 dict 반환
-        
-        if target_label in locations:
-            action_config = locations[target_label]
-            action_type = action_config.get("type")
-
-            if action_type == "homing":
-                self.robot_homing()
-                if request.wait:
-                    while True:
-                        time.sleep(0.5)
-                        if self.get_charging():
-                            self.get_logger().info(f"Docking Complete")
-                            break
-                    response.successed = True
-                else:
-                    response.successed = True
-
-            elif action_type == "pose":
-                x = action_config.get("x")
-                y = action_config.get("y")
-                theta = action_config.get("theta")
-                if x is not None and y is not None and theta is not None:
-                    self.publish_goal_pose(x, y, theta)
-                    if request.wait:
-                        time.sleep(1)
-                        while True:
-                            time.sleep(0.5)
-                            if not self.get_moving():
-                                self.get_logger().info(f"Moving Complete")
-                                break
-                        response.successed = True
-                    else:
-                        response.successed = True
-                else:
-                    self.get_logger().error(f"Pose parameters (x, y, theta) missing or invalid for label: '{target_label}' in config.")
-                    response.successed = False
-            else:
-                self.get_logger().warn(f"Unknown action type '{action_type}' for label: '{target_label}' in config.")
-                response.successed = False
-        else:
-            self.get_logger().warn(f"Label '{target_label}' not found in configuration.")
-            response.successed = False
-        return response'''
 
 
 def main(args=None):

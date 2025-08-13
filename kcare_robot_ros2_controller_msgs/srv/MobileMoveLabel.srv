@@ -1,4 +1,9 @@
 string label
 bool wait false
+
+float32 offset_x    0.0
+float32 offset_y    0.0
+float32 offset_yaw  0.0
+
 ---
 bool successed

@@ -275,21 +275,20 @@ class XarmToolGripper(Node):
         check_interval = 0.05
         zero_velocity_duration = 0.0
         start_time = time.time()
+        is_moved=False
 
         while time.time() - start_time < timeout:
             # 최신 상태 읽기 (필요 시 상태 갱신 호출)
-
             velocity = self.gripper_state.motor_velocity
-            #self.get_logger().info(f"Gripper Speed : {velocity}")
+            
+            if abs(velocity) >1:
+                is_moved=True
 
-            if abs(velocity) < 1:
-                zero_velocity_duration += check_interval
-            else:
-                zero_velocity_duration = 0.0  # 다시 움직이면 초기화
-
-            if zero_velocity_duration >= stable_time:
-                break  # 1초 이상 멈춰 있으면 완료로 판단
-
+            if is_moved:
+                if abs(velocity) < 1:
+                    zero_velocity_duration += check_interval
+                if zero_velocity_duration >= stable_time:
+                    break  # 1초 이상 멈춰 있으면 완료로 판단
             time.sleep(check_interval)
         
         end_time = time.time()
