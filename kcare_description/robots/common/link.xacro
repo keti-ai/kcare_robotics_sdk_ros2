@@ -3,7 +3,17 @@
 
   <xacro:include filename="$(find kcare_description)/robots/common/materials.xacro"/>
 
-  <xacro:macro name="common_link" params="name inertial_origin mass ixx iyy izz ixy iyz ixz mesh_file scale:='0.001 0.001 0.001' material:=silver">
+<xacro:macro name="common_link" params="
+  name 
+  inertial_origin:='0 0 0' 
+  mass:='0.5' 
+  ixx:='0.002' iyy:='0.002' izz:='0.002' 
+  ixy:='0.0' iyz:='0.0' ixz:='0.0' 
+  mesh_file 
+  scale:='0.001 0.001 0.001' 
+  material:='silver'">
+
+  <!-- <xacro:macro name="common_link" params="name inertial_origin mass ixx iyy izz ixy iyz ixz mesh_file scale:='0.001 0.001 0.001' material:=silver"> -->
     <link name="${name}">
       <inertial>
         <origin xyz="${inertial_origin}" rpy="0 0 0"/>

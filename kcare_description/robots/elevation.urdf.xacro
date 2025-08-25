@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<robot name="elevation" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="mesh_path" value="package://kcare_description/meshes/"/>
+
+  <xacro:common_link
+    name="elevation_base"
+    mesh_file="${mesh_path}elevation/elevation_base.stl"
+  />
+
+  <xacro:common_link
+    name="linear_block"
+    mesh_file="${mesh_path}/elevation/linear_block.stl"
+  />
+
+  <link name="world">
+  </link>
+
+  <link name="head_base">
+  </link>
+
+  <joint name="elevation_joint" type="prismatic">
+    <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    <parent link="elevation_base"/>
+    <child link="linear_block"/>
+    <axis xyz="0.0 0.0 1.0"/>
+    <limit upper="0.8" lower="0.0" effort="100" velocity="100"/>
+  </joint>
+
+
+  <joint name="elevation_to_arm_fix_joint" type="fixed">
+    <origin xyz="0.201662 0.0 0.0" rpy="0 0 0"/>
+    <parent link="linear_block"/>
+    <child link="world"/>
+  </joint>
+
+  <joint name="elevation_to_head_fix_joint" type="fixed">
+    <origin xyz="0.0 0.0 0.859" rpy="0 0 0"/>
+    <parent link="elevation_base"/>
+    <child link="head_base"/>
+  </joint>
+
+
+</robot>

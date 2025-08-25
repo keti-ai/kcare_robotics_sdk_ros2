@@ -3,6 +3,5 @@
 
   <xacro:include filename="$(find kcare_description)/robots/common/link.xacro"/>
   <xacro:include filename="$(find kcare_description)/robots/pan_tilt.urdf.xacro"/>
-  <!-- <xacro:include filename="$(find kcare_description)/robots/elevation.urdf.xacro"/> -->
 
 </robot>

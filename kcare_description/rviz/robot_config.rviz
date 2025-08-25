@@ -6,9 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /RobotModel1
         - /RobotModel1/Description Topic1
-        - /TF1
       Splitter Ratio: 0.5
     Tree Height: 820
   - Class: rviz_common/Selection
@@ -55,7 +53,116 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot_description
+        Value: /slam/robot_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        elevation_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        lb_caster:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        lf_caster:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rb_caster:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        rf_caster:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_wheel:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        slam_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /elevation/robot_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        elevation_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        linear_block:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        world:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /head/robot_description
       Enabled: true
       Links:
         All Links Enabled: true
@@ -79,11 +186,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        elevation_base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         femto_base_link:
           Alpha: 1
           Show Axes: false
@@ -93,6 +195,26 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        head_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_link1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_link2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        head_link3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         ir_frame:
           Alpha: 1
           Show Axes: false
@@ -101,22 +223,43 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        lb_caster:
+      Mass Properties:
+        Inertia: false
+        Mass: false
+      Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /xarm/robot_description
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        left_finger:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        left_wheel:
+        left_inner_knuckle:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        lf_caster:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        linear_block:
+        left_outer_knuckle:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -165,32 +308,30 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        rb_caster:
+        link_tcp:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        right_finger:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        rf_caster:
+        right_inner_knuckle:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        right_wheel:
+        right_outer_knuckle:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        ry_pantilt:
+        world:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
-        rz_pantilt:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        slam_base:
+        xarm_gripper_base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -222,11 +363,25 @@ Visualization Manager:
           Value: true
         femto_link:
           Value: true
+        head_base:
+          Value: true
+        head_link1:
+          Value: true
+        head_link2:
+          Value: true
+        head_link3:
+          Value: true
         ir_frame:
           Value: true
         ir_optical_frame:
           Value: true
         lb_caster:
+          Value: true
+        left_finger:
+          Value: true
+        left_inner_knuckle:
+          Value: true
+        left_outer_knuckle:
           Value: true
         left_wheel:
           Value: true
@@ -252,17 +407,25 @@ Visualization Manager:
           Value: true
         link_eef:
           Value: true
+        link_tcp:
+          Value: true
         rb_caster:
           Value: true
         rf_caster:
           Value: true
+        right_finger:
+          Value: true
+        right_inner_knuckle:
+          Value: true
+        right_outer_knuckle:
+          Value: true
         right_wheel:
           Value: true
-        ry_pantilt:
-          Value: true
-        rz_pantilt:
-          Value: true
         slam_base:
+          Value: true
+        world:
+          Value: true
+        xarm_gripper_base_link:
           Value: true
       Marker Scale: 0.4000000059604645
       Name: TF
@@ -272,30 +435,45 @@ Visualization Manager:
       Tree:
         slam_base:
           elevation_base:
+            head_base:
+              head_link1:
+                head_link2:
+                  head_link3:
+                    femto_base_link:
+                      femto_link:
+                        depth_frame:
+                          color_frame:
+                            color_optical_frame:
+                              {}
+                          depth_optical_frame:
+                            {}
+                          ir_frame:
+                            ir_optical_frame:
+                              {}
             linear_block:
-              link_base:
-                link1:
-                  link2:
-                    link3:
-                      link4:
-                        link5:
-                          link6:
-                            link7:
-                              link_eef:
-                                {}
-            rz_pantilt:
-              ry_pantilt:
-                femto_base_link:
-                  femto_link:
-                    depth_frame:
-                      color_frame:
-                        color_optical_frame:
-                          {}
-                      depth_optical_frame:
-                        {}
-                      ir_frame:
-                        ir_optical_frame:
-                          {}
+              world:
+                link_base:
+                  link1:
+                    link2:
+                      link3:
+                        link4:
+                          link5:
+                            link6:
+                              link7:
+                                link_eef:
+                                  xarm_gripper_base_link:
+                                    left_inner_knuckle:
+                                      {}
+                                    left_outer_knuckle:
+                                      left_finger:
+                                        {}
+                                    link_tcp:
+                                      {}
+                                    right_inner_knuckle:
+                                      {}
+                                    right_outer_knuckle:
+                                      right_finger:
+                                        {}
           lb_caster:
             {}
           left_wheel:
@@ -356,25 +534,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.6427998542785645
+      Distance: 2.567235231399536
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.10137392580509186
-        Y: 0.28647616505622864
-        Z: 0.5320958495140076
+        X: 0.03635592758655548
+        Y: 0.2831763029098511
+        Z: 0.44469326734542847
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.49539822340011597
+      Pitch: 0.34039852023124695
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.37224817276001
+      Yaw: 4.897244930267334
     Saved: ~
 Window Geometry:
   Displays:
@@ -390,5 +568,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1848
-  X: 163
-  Y: 18
+  X: 571
+  Y: 173
