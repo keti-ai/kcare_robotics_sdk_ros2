@@ -11,7 +11,7 @@
   ixy:='0.0' iyz:='0.0' ixz:='0.0' 
   mesh_file 
   scale:='0.001 0.001 0.001' 
-  material:='silver'">
+  material:='kcare_silver'">
 
   <!-- <xacro:macro name="common_link" params="name inertial_origin mass ixx iyy izz ixy iyz ixz mesh_file scale:='0.001 0.001 0.001' material:=silver"> -->
     <link name="${name}">

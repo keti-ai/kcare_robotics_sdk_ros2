@@ -12,51 +12,51 @@
   <xacro:common_link
     name="left_wheel"
     mesh_file="${mesh_path}slamware/slam_wheel.stl"
-    material="black"
+    material="kcare_black"
   />
 
   <xacro:common_link
     name="right_wheel"
     mesh_file="${mesh_path}slamware/slam_wheel.stl"
-    material="black"
+    material="kcare_black"
   />
 
   <xacro:common_link
     name="lf_caster"
     mesh_file="${mesh_path}slamware/caster.stl"
-    material="black"
+    material="kcare_black"
   />
 
   <xacro:common_link
     name="rf_caster"
      mesh_file="${mesh_path}slamware/caster.stl"
-    material="black"
+    material="kcare_black"
   />
 
   <xacro:common_link
     name="lb_caster"
     mesh_file="${mesh_path}slamware/caster.stl"
-    material="black"
+    material="kcare_black"
   />
 
   <xacro:common_link
     name="rb_caster"
     mesh_file="${mesh_path}slamware/caster.stl"
-    material="black"
+    material="kcare_black"
   />
 
   <link name="elevation_base">
   </link>
 
   <joint name="left_wheel_joint" type="continuous">
-    <origin xyz="0.0 0.16885 0.0" rpy="0 0 -1.5708"/>
+    <origin xyz="0.0 0.16885 0.0" rpy="0 0 ${-90 * pi/180}"/>
     <parent link="slam_base"/>
     <child link="left_wheel"/>
     <axis xyz="-1.0 0.0 0.0"/>
   </joint>
 
   <joint name="right_wheel_joint" type="continuous">
-    <origin xyz="0.0 -0.16885 0.0" rpy="0 0 1.5708"/>
+    <origin xyz="0.0 -0.16885 0.0" rpy="0 0 ${90 * pi/180}"/>
     <parent link="slam_base"/>
     <child link="right_wheel"/>
     <axis xyz="1.0 0.0 0.0"/>
@@ -87,7 +87,7 @@
   </joint>
 
   <joint name="slam_to_elev_fix_joint" type="fixed">
-    <origin xyz="0.0 0.0 0.362985" rpy="0 0 0"/>
+    <origin xyz="-0.04998 0.0 0.362985" rpy="0 0 0"/>
     <parent link="slam_base"/>
     <child link="elevation_base"/>
   </joint>

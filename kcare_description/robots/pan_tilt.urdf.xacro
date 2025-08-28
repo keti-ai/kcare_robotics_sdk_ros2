@@ -30,7 +30,7 @@
 
 
   <joint name="pantilt_fix_joint" type="fixed">
-    <origin xyz="-0.094838 0.0 0.077" rpy="0 0 0"/>
+    <origin xyz="-0.055 0.0 0.077" rpy="0 0 0"/>
     <parent link="head_base"/>
     <child link="head_link1"/>
   </joint>

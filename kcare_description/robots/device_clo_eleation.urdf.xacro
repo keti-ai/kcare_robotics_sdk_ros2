@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<robot name="kcare" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find kcare_description)/robots/common/link.xacro"/>
+  <xacro:include filename="$(find kcare_description)/robots/clo_elevation.urdf.xacro"/>
+
+</robot>

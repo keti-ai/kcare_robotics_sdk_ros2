@@ -1,8 +1,18 @@
 <?xml version="1.0" ?>
 <robot name="kcare" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+  <!-- <xacro:include filename="$(find kcare_description)/robots/common/link.xacro"/>
+
+  <xacro:include filename="$(find former_description)/urdf/robot.urdf.xacro"/>
+  <xacro:include filename="$(find kcare_description)/robots/elevation.urdf.xacro"/>
+
+  <joint name="slam_to_elev_fix_joint" type="fixed">
+    <origin xyz="0.051 0.0 306.0e-3" rpy="0 0 0"/>
+    <parent link="base_footprint"/>
+    <child link="elevation_base"/>
+  </joint> -->
+
   <xacro:include filename="$(find kcare_description)/robots/common/link.xacro"/>
-  <xacro:include filename="$(find kcare_description)/robots/pan_tilt.urdf.xacro"/>
-  <!-- <xacro:include filename="$(find kcare_description)/robots/elevation.urdf.xacro"/> -->
+  <xacro:include filename="$(find kcare_description)/robots/clo_elevation.urdf.xacro"/>
 
 </robot>
