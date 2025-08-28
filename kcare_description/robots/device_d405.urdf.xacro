@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<robot name="kcare" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="use_nominal_extrinsics" default="false"/>
+  <xacro:include filename="$(find realsense2_description)/urdf/_d405.urdf.xacro" />
+  
+  <link name="hand_camera_link" />
+  <xacro:sensor_d405 parent="hand_camera_link" use_nominal_extrinsics="$(arg use_nominal_extrinsics)">
+    <!-- <origin xyz="0.0 0.021 0.00835" rpy="${90 * pi/180} ${-90 * pi/180} 0.0"/> -->
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 ${-90 * pi/180}"/>
+  </xacro:sensor_d405>
+</robot>

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<robot name="kcare" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="mesh_path" value="package://kcare_description/meshes/"/>
+  <xacro:common_link
+    name="hand_base"
+    mesh_file="${mesh_path}tools/hand_base.stl"
+  />
+
+  <link name="hand_camera_link">
+  </link>
+
+
+  <joint name="hand_to_camera_fix_joint" type="fixed">
+    <origin xyz="0.0 0.0 0.0" rpy="${-75 * pi/180} 0 0.0"/>
+    <parent link="hand_base"/>
+    <child link="hand_camera_link"/>
+  </joint>
+
+
+</robot>
