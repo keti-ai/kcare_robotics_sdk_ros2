@@ -110,7 +110,7 @@ Tool Modbus 활성화를 위해 xarm_ros2/xarm_api/config/xarm_params.yaml 파�
 #### 3.3.2 패키지 빌드
 
     cd ~/kcare_ws/
-    colcon build --symlink-intall
+    colcon build --symlink-install
 
 
 ## 4 테스트 및 실행
