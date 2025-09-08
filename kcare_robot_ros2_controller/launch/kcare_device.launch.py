@@ -16,14 +16,6 @@ def generate_launch_description():
         [FindExecutable(name='xacro'), ' ', manipulator_xacro_file])
     
     return LaunchDescription([
-        Node(
-            package='robot_state_publisher',
-            executable='robot_state_publisher',
-            name='robot_state_publisher',
-            output='screen',
-            namespace='',
-            parameters=[{'robot_description': robot_description}],
-        ),
         # LM control node
         Node(
             package='kcare_robot_ros2_controller',
