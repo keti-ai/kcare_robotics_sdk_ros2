@@ -107,6 +107,20 @@ class MD485DriverWrapper:
 
         return [dir_input,run_brake_input,start_stop_input]
 
+    def get_lower_limit_switch(self):
+        io_status = self.read_io_status()
+        if io_status is None:
+            return None
+        lower_limit_switch = io_status[0]
+        return lower_limit_switch
+    
+    def get_emergency_stop(self):
+        io_status = self.read_io_status()
+        if io_status is None:
+            return None
+        emergency_stop = io_status[1]
+        return emergency_stop
+
     def read_target_position(self):
         result = self.client.read_holding_registers(230, count=2, slave=self.motor_id)
         if result.isError():
@@ -128,10 +142,10 @@ class MD485DriverWrapper:
         in_position = result.registers[0]
         moving = (in_position == 0)
 
-        print("=== Moving Status ===")
-        print(f"In Position : {not moving} (1: Yes, 0: No)")
-        print(f"Moving      : {moving} (1: Moving, 0: Stopped)")
-        print("======================")
+        # print("=== Moving Status ===")
+        # print(f"In Position : {not moving} (1: Yes, 0: No)")
+        # print(f"Moving      : {moving} (1: Moving, 0: Stopped)")
+        # print("======================")
 
         return in_position
 
@@ -150,22 +164,26 @@ class MD485DriverWrapper:
         self.read_moving_status()
 
 
+    def read_init_set_ok(self):
+        PID_COMMAND=66
+        result = self.client.read_holding_registers(PID_COMMAND, count=1, slave=self.motor_id)
+        return result.registers[0]
+
+    def set_init_set(self,data):
+        '''Warning PID 66 is PID_TQ_RATIO. We use this PID to set init_set flag'''
+        PID_COMMAND=66
+        self.client.write_register(PID_COMMAND, data, slave=self.motor_id)
 
 import time
 
 if __name__ == '__main__':
-    mddrv_ = MD485DriverWrapper('/dev/ttyACM0',19200)
+    mddrv_ = MD485DriverWrapper('/dev/ttyLM',19200)
+    
+    
     mddrv_.connect_lm()
 
-    mddrv_.reset_pose()
-    mddrv_.set_in_position_resolution()
-    mddrv_.read_motor_status()
+    mddrv_.set_init_set(0)
 
-    #mddrv_.set_position_with_velocity(560000,3000)
-    mddrv_.set_velocity(-2000)
-    while True:
-        mddrv_.read_io_status()
-        time.sleep(1)
-
+    print(mddrv_.read_init_set_ok())
 
     mddrv_.disconnect_lm()

@@ -29,7 +29,7 @@
 
 
   <joint name="elevation_to_arm_fix_joint" type="fixed">
-    <origin xyz="0.2415 0.0 0.0" rpy="0 0 ${-90 * pi/180}"/>
+    <origin xyz="0.2415 0.0 0.0" rpy="0 0 0"/>
     <parent link="linear_block"/>
     <child link="world"/>
   </joint>

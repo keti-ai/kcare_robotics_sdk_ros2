@@ -5,7 +5,7 @@
 
   <xacro:xarm_device 
       dof="7"
-      add_gripper="true"
+      add_gripper="false"
   />
 
 </robot>

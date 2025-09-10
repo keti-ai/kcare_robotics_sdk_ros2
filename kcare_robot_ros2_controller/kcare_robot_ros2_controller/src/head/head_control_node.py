@@ -4,6 +4,7 @@ from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 
+from sensor_msgs.msg import JointState
 from kcare_robot_ros2_controller.src.head.dxl_utils.dxl_prop import Dynamixel
 from kcare_robot_ros2_controller_msgs.msg import HeadCommand, HeadState, HeadGoHomeRequest
 from kcare_robot_ros2_controller_msgs.srv import HeadPoseCommand
@@ -46,6 +47,10 @@ class HeadControlNode(Node):
         
         self.state_publisher = self.create_publisher(HeadState,
                                                      'head/state',
+                                                     10)
+
+        self.joint_publisher = self.create_publisher(JointState,
+                                                     'head/joint_states',
                                                      10)
 
         self.service_client = self.create_service(HeadPoseCommand,'head/pose_command',self.service_callback_pose, callback_group=self.group1)
@@ -142,8 +147,14 @@ class HeadControlNode(Node):
         state_msg.speed_rz = float(self.dxl.speed(1))
         state_msg.speed_ry = float(self.dxl.speed(2))
         
-        self.state_publisher.publish(state_msg)
+        joint_msgs = JointState()
+        joint_msgs.header.stamp = self.get_clock().now().to_msg()
+        joint_msgs.header.frame_id = 'head_base'
+        joint_msgs.name = ['head_rz', 'head_ry']
+        joint_msgs.position = [self.cur_rz * 3.141592/180.0, self.cur_ry * 3.141592/180.0]
 
+        self.state_publisher.publish(state_msg)
+        self.joint_publisher.publish(joint_msgs)
 
 def main(args=None):
     rclpy.init(args=args)
