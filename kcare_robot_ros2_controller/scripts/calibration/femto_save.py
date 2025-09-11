@@ -106,7 +106,7 @@ class ImageSaverNode(Node):
             #self.save_images()
 
         rz=-90.0
-        for ry in range(-56,-39,1):
+        for ry in range(-56,0,1):
             self.rbutils.call_head_command([rz,ry])
             self.get_logger().info(f'Moved Head rz : {rz} ry : {ry}')
             pose=self.rbutils.get_head_pose()
