@@ -9,6 +9,12 @@
       "y": -0.807,
       "theta": -1.57
     },
+    "main_waypoint": {
+      "type": "pose",
+      "x": -1.37,
+      "y": -1.5,
+      "theta": 0.0
+    },
     "bed": {
       "type": "pose",
       "x": 2.099,
@@ -32,6 +38,12 @@
       "x": 1.5565762877783744,
       "y": -3.463238779581094,
       "theta": -1.57
+    },
+    "living_waypoint": {
+      "type": "pose",
+      "x": 0.527,
+      "y": -1.36,
+      "theta": 3.14
     },
     "dining_table": {
       "type": "pose",
