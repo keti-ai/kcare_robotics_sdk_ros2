@@ -1,0 +1,5 @@
+float32 distance
+bool wait false
+
+---
+bool successed

@@ -5,12 +5,12 @@ from rclpy.executors import MultiThreadedExecutor
 
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped
-from slamware_ros_sdk.msg import GoHomeRequest, Line2DFlt32Array, RobotBasicState
+from slamware_ros_sdk.msg import GoHomeRequest, Line2DFlt32Array, RobotBasicState, RotateRequest
 from geometry_msgs.msg import Twist, PoseStamped, Pose, Point, Quaternion
 from visualization_msgs.msg import Marker
-from kcare_robot_ros2_controller_msgs.srv import MobileMoveLabel, MobileDirectPose
+from kcare_robot_ros2_controller_msgs.srv import MobileMoveLabel, MobileDirectPose, MobileShift, MobileRotate
 from kcare_robot_ros2_controller.src.pyutils.config_loader import load_robot_config, get_param
-import math, os, json, time
+import math, os, json, time, threading
 from ament_index_python.packages import get_package_share_directory
 
 
@@ -43,6 +43,7 @@ class Mobile_Controller(Node):
 
         TOPIC_PUBS = {
             'cmd_vel':('/cmd_vel',Twist),
+            'rotate':( '/slamware_ros_sdk_server_node/rotate',RotateRequest),
             'goal_pose':('/move_base_simple/goal',PoseStamped),
             'go_home':('/slamware_ros_sdk_server_node/go_home',GoHomeRequest),
             'virtual_marker':('/virtual_marker',Marker),
@@ -60,9 +61,10 @@ class Mobile_Controller(Node):
             self.get_logger().info(f"Publisher created: {topic_tag} -> {topic_name}")
 
         self.service_client = self.create_service(MobileMoveLabel,'mobile/goal_pose',self.service_callback_pose, callback_group=self.srv_callback_group)
-
         self.service_direct_client = self.create_service(MobileDirectPose,'mobile/direct_pose',self.service_callback_direct_pose, callback_group=self.srv_callback_group)
-
+        self.service_shift_client = self.create_service(MobileShift, 'mobile/shift_pose',self.service_callback_shift_pose,callback_group=self.srv_callback_group)
+        self.service_rotate_client = self.create_service(MobileRotate,'mobile/rotate',self.service_callback_rotate, callback_group=self.srv_callback_group)
+        
         # --- Variables for pose tracking and movement detection ---
         self.current_robot_pose = None
         self.last_robot_pose = None # 이전 pose 저장
@@ -82,6 +84,8 @@ class Mobile_Controller(Node):
         self.is_charging = False
         
         self.tf_broadcaster = TransformBroadcaster(self)
+        
+        self.velocity = 0.1
 
     def publish_goal_pose(self, point_x, point_y, target_yaw):
         goal = PoseStamped()
@@ -384,6 +388,88 @@ class Mobile_Controller(Node):
             self.get_logger().warn(f"Label '{target_label}' not found in configuration.")
             response.successed = False
         return response
+
+    def service_callback_shift_pose(self, request: MobileShift.Request, response: MobileShift.Response):
+        distance= request.distance
+        
+        if distance == 0.0:
+            self.get_logger().info("Shift distance is 0. No movement executed.")
+            response.successed = False
+            return response
+        
+
+        duration = abs(distance / self.velocity)
+        direction = math.copysign(1.0, distance)
+        
+        self.get_logger().info(f"Request: {distance}m → {duration:.2f}s movement")
+        
+        move_thread = threading.Thread(
+            target=self.move_robot,
+            args=(direction, duration)
+        )
+        
+        move_thread.start()
+
+        if request.wait:
+            self.get_logger().info("Waiting for movement to complete...")
+            move_thread.join()
+            response.successed = True
+        else:
+            self.get_logger().info("Movement started in background.")
+            response.successed = True
+
+        return response
+
+
+    def move_robot(self, direction, duration):
+        twist = Twist()
+        twist.linear.x = direction * self.velocity
+        twist.angular.z = 0.0
+
+        rate = self.create_rate(20)  # 20 Hz
+        start_time = self.get_clock().now()
+
+        self.get_logger().info(f"[Thread] Moving for {duration:.2f}s at {twist.linear.x:.2f} m/s")
+
+        while (self.get_clock().now() - start_time).nanoseconds < duration * 1e9:
+            self.topic_pubs['cmd_vel'].publish(twist)
+            rate.sleep()
+
+        # 정지
+        twist.linear.x = 0.0
+        self.topic_pubs['cmd_vel'].publish(twist)
+
+        self.get_logger().info("[Thread] Movement complete. Robot stopped.")
+
+    def service_callback_rotate(self, request: MobileRotate.Request, response: MobileRotate.Response):
+        theta = request.theta
+        
+        if theta == 0.0:
+            self.get_logger().info("Rotate angle is 0. No rotation executed.")
+            response.successed = False
+            return response
+
+        rotate_msgs = RotateRequest()
+        rotate_msgs.rotation.x=0.
+        rotate_msgs.rotation.y=0.
+        rotate_msgs.rotation.z=math.sin(theta / 2.0)
+        rotate_msgs.rotation.w=math.cos(theta / 2.0)
+
+        self.topic_pubs['rotate'].publish(rotate_msgs)
+
+        if request.wait:
+            self.get_logger().info("Waiting for rotation to complete...")
+            time.sleep(1)  # 목표 전송 후 잠시 대기
+            while True:
+                time.sleep(0.5)
+                # ✅ 로봇이 움직이는지 여부와 목표 도달 여부를 동시에 확인
+                if not self.get_moving():
+                    self.get_logger().info(f"Rotation Complete: Reached relative yaw {math.degrees(theta):.2f} degrees.")
+                    break
+            response.successed = True
+
+        return response
+    
 
 
 def main(args=None):
