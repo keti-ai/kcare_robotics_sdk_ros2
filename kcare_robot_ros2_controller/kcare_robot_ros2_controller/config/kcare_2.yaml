@@ -1,0 +1,10 @@
+# kcare0 param.yaml
+lm_control_node:
+  ros__parameters:
+    port: "/dev/ttyLM"
+    baudrate: 19200
+    offset_position: 103.9
+    global_speed: 5000
+    initial_speed: 1000
+    elevation_range: [108., 675.]
+    home_position: 113.9
