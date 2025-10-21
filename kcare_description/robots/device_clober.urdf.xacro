@@ -8,7 +8,7 @@
 
 
   <joint name="slam_to_elev_fix_joint" type="fixed">
-    <origin xyz="0.076 0.0 306.0e-3" rpy="0 0 0"/>
+    <origin xyz="0.076 0.0 314.0e-3" rpy="0 0 0"/>
     <parent link="base_footprint"/>
     <child link="elevation_base"/>
   </joint>
