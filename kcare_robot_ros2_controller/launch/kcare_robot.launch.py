@@ -55,7 +55,7 @@ def generate_launch_description():
 
     # Launch description
     ld = LaunchDescription([
-        GroupAction([launch1_include]),
+        #GroupAction([launch1_include]),
         GroupAction([launch2_include]),
         #GroupAction([launch3_include]),
     ])

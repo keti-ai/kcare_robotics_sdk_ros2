@@ -6,10 +6,9 @@ from rclpy.executors import MultiThreadedExecutor
 
 from pymodbus.client import ModbusSerialClient
 import time
-
+import struct
 from kcare_robot_ros2_controller_msgs.msg import GripperState
 from kcare_robot_ros2_controller_msgs.srv import GripperCommand
-
 
 
 class GripperControllerWrapper:
@@ -48,8 +47,7 @@ class GripperControllerWrapper:
         """
         try:
             # Modbus 요청 시 `slave=1`을 키워드 인자로 전달
-            registers = self.client.read_holding_registers(0, count=5, slave=1)
-            
+            registers = self.client.read_holding_registers(10, count=5, slave=1)
             # 요청 실패 처리
             if not registers or registers.isError():
                 print("⚠️ 모터 상태 읽기 실패!")
@@ -59,21 +57,15 @@ class GripperControllerWrapper:
             return None
 
         # GripperState 메시지에 매핑
+        def to_int16(val):
+            return struct.unpack('>h', struct.pack('>H', val))[0]
+        
         gripper_state = GripperState()
-        gripper_state.motor_position = registers.registers[1]
-        gripper_state.motor_current = registers.registers[2]
-        gripper_state.motor_velocity = registers.registers[3]
-        gripper_state.finger_position = registers.registers[4]
+        gripper_state.motor_position = to_int16(registers.registers[1])
+        gripper_state.motor_current = to_int16(registers.registers[2])
+        gripper_state.motor_velocity = to_int16(registers.registers[3])
+        gripper_state.finger_position = to_int16(registers.registers[4])
 
-        # 상태 플래그 (비트 마스킹 사용 가능)
-        gripper_state.motor_enabled = bool(registers.registers[0] & 0x01)
-        gripper_state.gripper_initialized = bool(registers.registers[0] & 0x02)
-        gripper_state.position_ctrl_mode = bool(registers.registers[0] & 0x04)
-        gripper_state.velocity_ctrl_mode = bool(registers.registers[0] & 0x08)
-        gripper_state.current_ctrl_mode = bool(registers.registers[0] & 0x10)
-        gripper_state.grp_opened = bool(registers.registers[0] & 0x20)
-        gripper_state.grp_closed = bool(registers.registers[0] & 0x40)
-        gripper_state.motor_fault = bool(registers.registers[0] & 0x80)
 
         return gripper_state
 
@@ -86,7 +78,7 @@ class GripperNode(Node):
         self.group1 = MutuallyExclusiveCallbackGroup()
         self.group2 = MutuallyExclusiveCallbackGroup()
 
-        self.gripper_client = GripperControllerWrapper("/dev/ttyGripper", 115200)
+        self.gripper_client = GripperControllerWrapper("/dev/ttyUSB0", 115200)
         self.gripper_client.connect_grip()
         self.gripper_client.gripper_initialize()
 

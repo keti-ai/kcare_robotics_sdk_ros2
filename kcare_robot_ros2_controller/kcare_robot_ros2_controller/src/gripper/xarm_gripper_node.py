@@ -10,6 +10,7 @@ from kcare_robot_ros2_controller_msgs.msg import GripperState
 from kcare_robot_ros2_controller_msgs.srv import GripperCommand
 
 import time
+import struct
 
 class RobotParam:
     spin_time: float = 0.05     # ROS2 루프문 대기시간
@@ -215,10 +216,18 @@ class XarmToolGripper(Node):
         #self.gripper_state.grp_closed = bool(flags & 0x40)
         #self.gripper_state.motor_fault = bool(flags & 0x80)
 
-        self.gripper_state.motor_position = registers[1]
-        self.gripper_state.motor_current = registers[2]
-        self.gripper_state.motor_velocity = registers[3] - 0x10000 if registers[3] >= 0x8000 else registers[3]
-        self.gripper_state.finger_position = registers[4]
+        # self.gripper_state.motor_position = registers[1]
+        # self.gripper_state.motor_current = registers[2]
+        # self.gripper_state.motor_velocity = registers[3] - 0x10000 if registers[3] >= 0x8000 else registers[3]
+        # self.gripper_state.finger_position = registers[4]
+        
+        def to_int16(val):
+            return struct.unpack('>h', struct.pack('>H', val))[0]
+        
+        self.gripper_state.motor_position = to_int16(registers[1])
+        self.gripper_state.motor_current = to_int16(registers[2])
+        self.gripper_state.motor_velocity = to_int16(registers[3])
+        self.gripper_state.finger_position = to_int16(registers[4])
         
         if False:
             self.get_logger().info("====== Gripper 상태 ======")
