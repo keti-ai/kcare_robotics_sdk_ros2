@@ -1,7 +1,7 @@
 int16 motor_position
 int16 motor_current
 int16 motor_velocity
-uint16 finger_position
+int16 finger_position
 
 bool motor_enabled
 bool gripper_initialized
