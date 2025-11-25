@@ -18,6 +18,7 @@ class GripperControllerWrapper:
         
         # Initialize the pymodbus
         self.client = ModbusSerialClient(self.port, baudrate=self.baud)
+        self.gripper_state = GripperState()
 
     def connect_grip(self):
         self.client.connect()
@@ -60,14 +61,14 @@ class GripperControllerWrapper:
         def to_int16(val):
             return struct.unpack('>h', struct.pack('>H', val))[0]
         
-        gripper_state = GripperState()
-        gripper_state.motor_position = to_int16(registers.registers[1])
-        gripper_state.motor_current = to_int16(registers.registers[2])
-        gripper_state.motor_velocity = to_int16(registers.registers[3])
-        gripper_state.finger_position = to_int16(registers.registers[4])
+        self.gripper_state.motor_position = to_int16(registers.registers[1])
+        self.gripper_state.motor_current = to_int16(registers.registers[2])
+        self.gripper_state.motor_velocity = to_int16(registers.registers[3])
+        self.gripper_state.finger_position = to_int16(registers.registers[4])
 
+        
 
-        return gripper_state
+        return self.gripper_state
 
 
 
@@ -78,7 +79,7 @@ class GripperNode(Node):
         self.group1 = MutuallyExclusiveCallbackGroup()
         self.group2 = MutuallyExclusiveCallbackGroup()
 
-        self.gripper_client = GripperControllerWrapper("/dev/ttyUSB0", 115200)
+        self.gripper_client = GripperControllerWrapper("/dev/ttyGripper", 115200)
         self.gripper_client.connect_grip()
         self.gripper_client.gripper_initialize()
 
@@ -90,16 +91,63 @@ class GripperNode(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback,callback_group=self.group2)
         
 
+
     def set_gripperpose_callback(self,request,response):
-        self.get_logger().info(f"Gripper Service Call.")
-        if (0 <= request.pose <= 1000 and 50<= request.force <= 100):
-            self.gripper_client.set_motor_torque(request.force)
-            self.gripper_client.set_finger_position(request.pose)
-            self.get_logger().info(f"Gripper Work Fine. Pose : {request.pose}, Force : {request.force}.")
-            response.successed=True
-        else:
+        # self.get_logger().info(f"Gripper Service Call.")
+        # if (0 <= request.pose <= 1000 and 0<= request.force <= 100):
+        #     self.gripper_client.set_motor_torque(request.force)
+        #     self.gripper_client.set_finger_position(request.pose)
+        #     self.get_logger().info(f"Gripper Work Fine. Pose : {request.pose}, Force : {request.force}.")
+        #     response.successed=True
+        # else:
+        #     self.get_logger().info(f"Gripper request out of range.")
+        #     response.successed=False
+        # return response
+
+        self.get_logger().info(f"Gripper Finger Pose Service Call.")
+        if not (0 <= request.pose <= 1000 and 0<= request.force <= 100):
             self.get_logger().info(f"Gripper request out of range.")
             response.successed=False
+            return response
+
+        self.gripper_client.set_motor_torque(request.force)
+        self.gripper_client.set_finger_position(request.pose)
+
+        self.get_logger().info(f"Gripper Work Fine. Pose : {request.pose}, Force : {request.force}.")
+        
+        # 비동기 완료 처리
+        if not request.wait:
+            response.successed=True
+            return response
+
+        # ✅ 이동 완료 대기 로직
+        timeout = 5.0     # 최대 대기 시간 (초)
+        stable_time = 0.4 # 속도가 0인 상태로 유지되어야 하는 시간 (초)
+        check_interval = 0.05
+        zero_velocity_duration = 0.0
+        start_time = time.time()
+        is_moved=False
+
+        while time.time() - start_time < timeout:
+            # 최신 상태 읽기 (필요 시 상태 갱신 호출)
+            velocity = self.gripper_client.gripper_state.motor_velocity
+
+            if abs(velocity) >1:
+                is_moved=True
+
+            if is_moved:
+                if abs(velocity) < 1:
+                    zero_velocity_duration += check_interval
+                if zero_velocity_duration >= stable_time:
+                    break  # 1초 이상 멈춰 있으면 완료로 판단
+            time.sleep(check_interval)
+        
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        self.get_logger().info(f"✅ Gripper movement completed in {elapsed_time:.2f} seconds.")
+        
+        response.successed=True
+        
         return response
 
 
