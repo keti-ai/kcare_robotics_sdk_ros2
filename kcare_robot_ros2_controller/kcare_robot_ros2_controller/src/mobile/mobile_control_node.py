@@ -5,7 +5,7 @@ from rclpy.executors import MultiThreadedExecutor
 
 from tf2_ros import TransformBroadcaster
 from geometry_msgs.msg import TransformStamped
-from slamware_ros_sdk.msg import GoHomeRequest, Line2DFlt32Array, RobotBasicState, RotateRequest
+from slamware_ros_sdk.msg import GoHomeRequest, Line2DFlt32Array, RobotBasicState, RotateRequest, RotateToRequest
 from geometry_msgs.msg import Twist, PoseStamped, Pose, Point, Quaternion
 from visualization_msgs.msg import Marker
 from kcare_robot_ros2_controller_msgs.srv import MobileMoveLabel, MobileDirectPose, MobileShift, MobileRotate
@@ -44,6 +44,7 @@ class Mobile_Controller(Node):
         TOPIC_PUBS = {
             'cmd_vel':('/cmd_vel',Twist),
             'rotate':( '/slamware_ros_sdk_server_node/rotate',RotateRequest),
+            'rotate_to':( '/slamware_ros_sdk_server_node/rotate_to',RotateToRequest),
             'goal_pose':('/move_base_simple/goal',PoseStamped),
             'go_home':('/slamware_ros_sdk_server_node/go_home',GoHomeRequest),
             'virtual_marker':('/virtual_marker',Marker),
@@ -64,6 +65,8 @@ class Mobile_Controller(Node):
         self.service_direct_client = self.create_service(MobileDirectPose,'mobile/direct_pose',self.service_callback_direct_pose, callback_group=self.srv_callback_group)
         self.service_shift_client = self.create_service(MobileShift, 'mobile/shift_pose',self.service_callback_shift_pose,callback_group=self.srv_callback_group)
         self.service_rotate_client = self.create_service(MobileRotate,'mobile/rotate',self.service_callback_rotate, callback_group=self.srv_callback_group)
+        self.service_absolute_rotate_client = self.create_service(MobileRotate,'mobile/absolute_rotate',self.service_callback_absolute_rotate, callback_group=self.srv_callback_group)
+        
         
         # --- Variables for pose tracking and movement detection ---
         self.current_robot_pose = None
@@ -85,7 +88,7 @@ class Mobile_Controller(Node):
         
         self.tf_broadcaster = TransformBroadcaster(self)
         
-        self.velocity = 0.1
+        self.velocity = 0.15
 
     def publish_goal_pose(self, point_x, point_y, target_yaw):
         goal = PoseStamped()
@@ -470,7 +473,30 @@ class Mobile_Controller(Node):
 
         return response
     
+    def service_callback_absolute_rotate(self, request: MobileRotate.Request, response: MobileRotate.Response):
+        theta = request.theta
+        
+        rotate_msgs = RotateToRequest()
+        rotate_msgs.orientation.x=0.
+        rotate_msgs.orientation.y=0.
+        rotate_msgs.orientation.z=math.sin(theta / 2.0)
+        rotate_msgs.orientation.w=math.cos(theta / 2.0)
+        
+        self.topic_pubs['rotate_to'].publish(rotate_msgs)
+        
+        if request.wait:
+            self.get_logger().info("Waiting for rotation to complete...")
+            time.sleep(1)  # 목표 전송 후 잠시 대기
+            while True:
+                time.sleep(0.5)
+                # ✅ 로봇이 움직이는지 여부와 목표 도달 여부를 동시에 확인
+                if not self.get_moving():
+                    self.get_logger().info(f"Rotation Complete: Reached relative yaw {math.degrees(theta):.2f} degrees.")
+                    break
+            response.successed = True
 
+        return response
+        
 
 def main(args=None):
     rclpy.init(args=args)
