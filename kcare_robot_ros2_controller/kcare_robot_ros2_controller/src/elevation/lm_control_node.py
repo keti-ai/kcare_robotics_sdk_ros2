@@ -17,19 +17,34 @@ class LMControlNode(Node):
         super().__init__('lm_control_node')
 
 
-        self.declare_parameter('port','/dev/ttyLM')
+        self.declare_parameter('port','/dev/ttyUSB0')
         self.declare_parameter('baudrate',19200)
-        self.declare_parameter('offset_position',103.9)
-        self.declare_parameter('global_speed',5000)
-        self.declare_parameter('initial_speed',1000)
-        self.declare_parameter('elevation_range',[108.0, 675.0])
-        self.declare_parameter('home_position',113.9)
+        self.declare_parameter('offset_position',0.0)
+        self.declare_parameter('global_speed',100.0)
+        self.declare_parameter('initial_speed',10.0)
+        self.declare_parameter('elevation_range',[0.0, 700.0])
+        self.declare_parameter('home_position',10.0)
+        self.declare_parameter('encoder_ppr', 16384)
+        self.declare_parameter('reduction_ratio', 28/19)
+        self.declare_parameter('lead_pitch', 10)
+        self.declare_parameter('rpm_range', [-3000, 3000])
+        self.declare_parameter('limit_inveted', True)
+
+
 
         #self.get_logger().info(f'Home position: {self.get_parameter("home_position").get_parameter_value().double_value}')
 
         self.lm_client = MD485DriverWrapper(
-            self.get_parameter('port').get_parameter_value().string_value,
-            self.get_parameter('baudrate').get_parameter_value().integer_value
+            port=self.get_parameter('port').get_parameter_value().string_value,
+            baud=self.get_parameter('baudrate').get_parameter_value().integer_value,
+            ros_node=self,
+            elevation_range=self.get_parameter('elevation_range').get_parameter_value().double_array_value,
+            offset_position=self.get_parameter('offset_position').get_parameter_value().double_value,
+            encoder_ppr=self.get_parameter('encoder_ppr').get_parameter_value().integer_value,
+            reduction_ratio=self.get_parameter('reduction_ratio').get_parameter_value().double_value,
+            lead_pitch=self.get_parameter('lead_pitch').get_parameter_value().integer_value,
+            rpm_range=self.get_parameter('rpm_range').get_parameter_value().integer_array_value,
+            limit_inveted=self.get_parameter('limit_inveted').get_parameter_value().bool_value,
         )
         self.lm_client.connect_lm()
 
@@ -60,6 +75,7 @@ class LMControlNode(Node):
         self.emergency_stop = False
         
         self.initialize_elevation()
+        self.get_logger().info(f"Elevation Initialize Complete")
         
     def initialize_elevation(self):
         if self.lm_client.read_init_set_ok():
@@ -69,8 +85,8 @@ class LMControlNode(Node):
         self.get_logger().info("Initializing elevation...")
         
         self.lm_client.reset_pose()
-        self.lm_client.set_in_position_resolution()
-        self.lm_client.set_velocity(-1800)
+        self.lm_client.set_in_position_resolution(0.5)
+        self.lm_client.set_linear_velocity(-10.0)
         
         while self.lm_client.get_lower_limit_switch():
             time.sleep(0.1)
@@ -78,27 +94,29 @@ class LMControlNode(Node):
         self.lm_client.reset_pose()
         time.sleep(0.05)
         
-        self.lm_client.set_position_with_velocity(56000,self.get_parameter('global_speed').get_parameter_value().integer_value)
-        
-        while True:
-            ret=self.lm_client.read_moving_status()
+        self.lm_client.move_abs_pose_mm(
+            self.get_parameter('home_position').get_parameter_value().double_value,
+            self.get_parameter('global_speed').get_parameter_value().double_value
+        )
+
+        while not self.lm_client.read_in_position_status():
             time.sleep(0.1)
-            if ret:
-                break
         
         self.lm_client.set_init_set(True)
         self.initialized=True
+
+
         
     def read_loop(self):
         with self.cmd_lock:
-            self.current_position = self.lm_client.count_to_mm(self.lm_client.read_monitor()[2]) + self.get_parameter('offset_position').get_parameter_value().double_value
-            self.target_position = self.lm_client.count_to_mm(self.lm_client.read_target_position()) + self.get_parameter('offset_position').get_parameter_value().double_value
-            self.emergency_stop = self.lm_client.read_io_status()[1]
+            self.lm_client.read_current_position()
+            self.lm_client.read_target_position()
+            self.lm_client.get_emergency_stop()
             
-        if self.emergency_stop==0:
+        if not self.lm_client.get_emergency_stop():
             self.get_logger().error("Emergency Stop Activated! Stopping all movements.")
-        # else:
-        #     self.get_logger().info(f"Current Position: {self.current_position:.2f} mm, Target Position: {self.target_position:.2f} mm")     
+        else:
+            self.get_logger().debug(f"Current Position: {self.current_position:.2f} mm, Target Position: {self.target_position:.2f} mm")     
             
     def data_publish(self):       
         state_msg = LMState()
@@ -128,17 +146,16 @@ class LMControlNode(Node):
             )
             response.successed = False # 성공하지 않았음을 명시
             return response
+        
 
         # 2. 유효한 범위 내에 있다면 이동 로직 실행 (기존 로직)
-        # offset_position을 적용하여 실제 구동할 count 값을 계산합니다.
-        move_step = int(self.lm_client.mm_to_count(target_absolute_position - self.get_parameter('offset_position').get_parameter_value().double_value))
-        with self.cmd_lock:
-            self.lm_client.set_position_with_velocity(move_step,self.get_parameter('global_speed').get_parameter_value().integer_value)
-            
+        self.lm_client.move_abs_pose_mm(target_absolute_position,self.get_parameter('global_speed').get_parameter_value().double_value)
+
+
         if request.until_complete:
             while True:
                 with self.cmd_lock:
-                    ret=self.lm_client.read_moving_status()
+                    ret=self.lm_client.read_in_position_status()
                 time.sleep(0.1)
                 if ret:
                     self.get_logger().info("Target Move Complete.")
@@ -156,7 +173,7 @@ class LMControlNode(Node):
             return
         if msg.cmd_type == 'rel':
             with self.cmd_lock:
-                self.lm_client.inc_position_with_velocity(int(self.lm_client.mm_to_count(msg.move)),3000)
+                self.lm_client.move_inc_pose_mm(msg.move,self.get_parameter('global_speed').get_parameter_value().double_value)
 
     def timer_callback(self):
         if not self.initialized:

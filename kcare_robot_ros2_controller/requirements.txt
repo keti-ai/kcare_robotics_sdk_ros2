@@ -1,5 +1,5 @@
 dynamixel-sdk
 numpy
 opencv-python
-pymodbus
+pymodbus==3.8.3
 pyserial
