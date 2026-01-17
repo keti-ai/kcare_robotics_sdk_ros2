@@ -1,3 +1,5 @@
+empy==3.3.4
+lark
 dynamixel-sdk
 numpy
 opencv-python
