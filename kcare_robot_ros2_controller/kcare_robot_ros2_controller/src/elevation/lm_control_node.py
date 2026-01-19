@@ -28,7 +28,8 @@ class LMControlNode(Node):
         self.declare_parameter('reduction_ratio', 28/19)
         self.declare_parameter('lead_pitch', 10)
         self.declare_parameter('rpm_range', [-3000, 3000])
-        self.declare_parameter('limit_inveted', True)
+        self.declare_parameter('limit_inveted', False)
+        self.declare_parameter('motor_inv',True)
 
 
 
@@ -38,6 +39,7 @@ class LMControlNode(Node):
             port=self.get_parameter('port').get_parameter_value().string_value,
             baud=self.get_parameter('baudrate').get_parameter_value().integer_value,
             ros_node=self,
+            debug=True,
             elevation_range=self.get_parameter('elevation_range').get_parameter_value().double_array_value,
             offset_position=self.get_parameter('offset_position').get_parameter_value().double_value,
             encoder_ppr=self.get_parameter('encoder_ppr').get_parameter_value().integer_value,
@@ -45,6 +47,7 @@ class LMControlNode(Node):
             lead_pitch=self.get_parameter('lead_pitch').get_parameter_value().integer_value,
             rpm_range=self.get_parameter('rpm_range').get_parameter_value().integer_array_value,
             limit_inveted=self.get_parameter('limit_inveted').get_parameter_value().bool_value,
+            motor_inv=self.get_parameter('motor_inv').get_parameter_value().bool_value,
         )
         self.lm_client.connect_lm()
 

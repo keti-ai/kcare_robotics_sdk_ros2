@@ -18,6 +18,7 @@ class MD485DriverWrapper:
         self.lead_pitch = kwargs.get('lead_pitch', 10) # 리드 피치 (mm)
         self.rpm_range = kwargs.get('rpm_range', [-5000, 5000]) # 속도(RPM) 범위
         self.limit_inveted = kwargs.get('limit_inveted', False) # 리미트센서 반전여부
+        self.motor_inv = kwargs.get('motor_inv',False)
         self.motor_id = kwargs.get('motor_id', 1) # 모터드라이버 모드버스 슬레이브 ID (기본 1)
 
 
@@ -63,6 +64,7 @@ class MD485DriverWrapper:
     def connect_lm(self):
         # 포트 열기
         self.client.connect()
+        self.set_inv_velocity(self.motor_inv)
 
     def disconnect_lm(self):
         # 포트 닫기
@@ -227,7 +229,7 @@ class MD485DriverWrapper:
             return None
 
         # limit_inverted 여부에 따라 읽는 인덱스 선택
-        if getattr(self, 'limit_inverted', False):
+        if not self.limit_inveted: 
             self.limit_status = io_status[2]
         else:
             self.limit_status = io_status[0]
@@ -256,6 +258,10 @@ class MD485DriverWrapper:
 
         return in_position
 
+
+    def set_inv_velocity(self,direction):
+        PID_COMMAND=16
+        self.client.write_register(PID_COMMAND, direction, slave=self.motor_id)
 
     def read_init_set_ok(self):
         PID_COMMAND=66
@@ -287,17 +293,28 @@ if __name__ == '__main__':
         encoder_ppr=16384,
         reduction_ratio=28/19,
         rpm_range=[-3000, 3000],
-        limit_inveted=True
+        limit_inveted=True,
+        motor_inv=True
         )
     #mddrv_ = MD485DriverWrapper(port='/dev/ttyUSB0',baudrate=19200)
     
     mddrv_.connect_lm()
 
-    mddrv_.set_in_position_resolution(0.5)
 
-    mddrv_.move_abs_pose_mm(150.0,100.0)
-    time.sleep(0.01)
-    mddrv_.read_in_position_status()
+
+    mddrv_.set_linear_velocity(-20.0)
+
+    time.sleep(3)
+
+
+    mddrv_.set_linear_velocity(0.0)
+
+
+    #mddrv_.set_in_position_resolution(0.5)
+
+    #mddrv_.move_abs_pose_mm(150.0,100.0)
+    #time.sleep(0.01)
+    #mddrv_.read_in_position_status()
 
     #mddrv_.set_velocity_rpm(0)
     #mddrv_.set_linear_velocity(0)

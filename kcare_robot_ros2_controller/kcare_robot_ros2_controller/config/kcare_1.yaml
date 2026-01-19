@@ -4,7 +4,14 @@ lm_control_node:
     port: "/dev/ttyLM"
     baudrate: 19200
     offset_position: 103.9
-    global_speed: 5000
-    initial_speed: 1000
+    global_speed: 100.0
+    initial_speed: 10.0
     elevation_range: [108., 675.]
     home_position: 113.9
+    home_position: 118.33
+    encoder_ppr: 16384
+    reduction_ratio: 14
+    lead_pitch: 10
+    rpm_range: [-5000, 5000]
+    limit_inveted: True
+    motor_inv: False
