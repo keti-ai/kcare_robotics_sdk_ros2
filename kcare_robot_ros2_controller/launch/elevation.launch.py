@@ -6,7 +6,7 @@ from launch.substitutions import Command, FindExecutable
 
 def generate_launch_description():
     # 1. 로봇 이름 인자를 선언합니다.
-    param_name = 'kcare_0.yaml'
+    param_name = 'kcare_1.yaml'
     
     param_file = os.path.join(get_package_share_directory('kcare_robot_ros2_controller'),
                               'config', param_name)

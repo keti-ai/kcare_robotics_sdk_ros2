@@ -17,12 +17,12 @@ class LMControlNode(Node):
         super().__init__('lm_control_node')
 
 
-        self.declare_parameter('port','/dev/ttyUSB0')
-        self.declare_parameter('baudrate',19200)
-        self.declare_parameter('offset_position',0.0)
-        self.declare_parameter('global_speed',100.0)
+        self.declare_parameter('port','/dev/ttyLM')
+        self.declare_parameter('baudrate',115200)
+        self.declare_parameter('offset_position',103.9)
+        self.declare_parameter('global_speed',150.0)
         self.declare_parameter('initial_speed',10.0)
-        self.declare_parameter('elevation_range',[0.0, 700.0])
+        self.declare_parameter('elevation_range',[108., 675.])
         self.declare_parameter('home_position',10.0)
         self.declare_parameter('encoder_ppr', 16384)
         self.declare_parameter('reduction_ratio', 28/19)
@@ -73,8 +73,6 @@ class LMControlNode(Node):
         
         
         self.initialized=False
-        self.current_position = 0.0
-        self.target_position = 0.0
         self.emergency_stop = False
         
         self.initialize_elevation()
@@ -119,19 +117,19 @@ class LMControlNode(Node):
         if not self.lm_client.get_emergency_stop():
             self.get_logger().error("Emergency Stop Activated! Stopping all movements.")
         else:
-            self.get_logger().debug(f"Current Position: {self.current_position:.2f} mm, Target Position: {self.target_position:.2f} mm")     
+            self.get_logger().debug(f"Current Position: {self.lm_client.current_position:.2f} mm, Target Position: {self.lm_client.target_position:.2f} mm")     
             
     def data_publish(self):       
         state_msg = LMState()
-        state_msg.current_position = self.current_position
-        state_msg.target_position = self.target_position
+        state_msg.current_position = self.lm_client.current_position
+        state_msg.target_position = self.lm_client.target_position
         state_msg.state = (self.emergency_stop == 1)
         
         joint_msg = JointState()
         joint_msg.header.stamp = self.get_clock().now().to_msg()
         joint_msg.header.frame_id = 'elevation_base'
         joint_msg.name = ['elevation_joint']
-        joint_msg.position = [self.current_position / 1000.0]  # Convert mm to meters
+        joint_msg.position = [self.lm_client.current_position / 1000.0]  # Convert mm to meters
         
         self.state_publisher.publish(state_msg)
         self.joint_publisher.publish(joint_msg)
@@ -163,10 +161,10 @@ class LMControlNode(Node):
                 if ret:
                     self.get_logger().info("Target Move Complete.")
                     break
-                if self.emergency_stop==0:
-                    self.get_logger().error("Emergency Stop Activated during movement! Aborting.")
-                    response.successed = False
-                    return response
+                # if self.emergency_stop==0:
+                #     self.get_logger().error("Emergency Stop Activated during movement! Aborting.")
+                #     response.successed = False
+                #     return response
                 
         response.successed=True
         return response

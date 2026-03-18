@@ -2,9 +2,9 @@
 lm_control_node:
   ros__parameters:
     port: "/dev/ttyLM"
-    baudrate: 19200
+    baudrate: 115200
     offset_position: 103.9
-    global_speed: 100.0
+    global_speed: 180.0 # Max 300 mm/s
     initial_speed: 10.0
     elevation_range: [108., 675.]
     home_position: 113.9

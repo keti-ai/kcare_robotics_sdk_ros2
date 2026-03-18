@@ -14,7 +14,7 @@ class HeadControlNode(Node):
     def __init__(self):
         super().__init__('head_control_node')
         
-        self.baudrate = 57600
+        self.baudrate = 115200
         self.protocol = 2.0
         self.device_name = '/dev/ttyHead'
         self.device_id = [1, 2]
@@ -96,8 +96,8 @@ class HeadControlNode(Node):
         """
         ✅ 요청된 rz, ry 값으로 모터를 이동시키고, 목표 위치에 도달하면 응답 반환
         """
-        target_rz = -int(request.rz)
-        target_ry = -int(request.ry)
+        target_rz = int(request.rz)
+        target_ry = int(request.ry)
 
         # ✅ 모터 이동 명령 실행
         self.update_target_pose(target_rz, target_ry)
@@ -129,8 +129,8 @@ class HeadControlNode(Node):
         self.target_ry=target_ry
 
     def update_current_pose(self):
-        cur_rz = self.dxl.get_pose(1)
-        cur_ry = self.dxl.get_pose(2)
+        cur_rz = -self.dxl.get_pose(1)
+        cur_ry = -self.dxl.get_pose(2)
         return cur_rz, cur_ry
 
 

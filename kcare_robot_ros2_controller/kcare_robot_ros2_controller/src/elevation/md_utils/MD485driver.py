@@ -8,7 +8,7 @@ class MD485DriverWrapper:
         self.debug = debug
 
         self.port = kwargs.get('port','/dev/ttyLM')
-        self.baud = kwargs.get('baudrate',19200)
+        self.baud = kwargs.get('baudrate',115200)
 
         #self.home_pos = kwargs.get('home_pos', 110)              # 홈 위치 (기본값 0)
         self.elevation_range = kwargs.get('elevation_range', [0.0, 600.0])
