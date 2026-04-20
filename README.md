@@ -156,7 +156,6 @@
     ```
 
     - Dynamixel Wizard 세팅
-    * Dynamixel Wizard Download
         - [Dynamixel EManual](https://emanual.robotis.com/docs/en/software/dynamixel/dynamixel_wizard2/)
     - 시리얼 포트 권한 관련 설정
     ```bash
@@ -204,10 +203,10 @@
 
 
     - #### 6.4 Kcare robot 로봇노드 실행(Xarm Node와 동시 실행)
-        - kcare_robot_ros2_controller/launch/nsquare_robot.launch.py에서 아래부분 IP 변경
+        - kcare_robot_ros2_controller/launch/kcare_robot.launch.py에서 아래부분 IP 변경
         ```python
         def generate_launch_description():
-            xarm_ip_value = '192.168.5.212'    # 이부분 IP 로봇에 맞게 변경
+            xarm_ip_value = '192.168.5.233'    # 이부분 IP 로봇에 맞게 변경
             # Include launch files
             xarm_package_dir = get_package_share_directory('xarm_api')
             xarm_launch_file_dir = os.path.join(xarm_package_dir, 'launch')
