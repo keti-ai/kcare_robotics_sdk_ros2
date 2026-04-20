@@ -77,3 +77,5 @@ Thumbs.db
 # ==========================================
 # User Editing file except
 # ==========================================
+src/third_party/slamware_pkgs/slamware_ros_sdk/
+src/third_party/slamware_pkgs/slamware_sdk/
