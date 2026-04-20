@@ -1,0 +1,2 @@
+src/third_party/slamware_ros_pkgs/slamware_ros_sdk filter=lfs diff=lfs merge=lfs -text
+src/third_party/slamware_ros_pkgs/slamware_sdk filter=lfs diff=lfs merge=lfs -text
