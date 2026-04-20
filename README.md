@@ -16,6 +16,7 @@
     ```
 - 서브모듈 다운로드.(Xarm ros2, Orbbec Camera ROS2)
     ```bash
+    # 레포지토리 루트 디렉토리로 이동
     cd kcare_robotics_sdk_ros2
     git submodule sync
     git submodule update --init --remote --recursive --progress
@@ -77,15 +78,30 @@
     colcon build --packages-up-to xarm_api xarm_msgs uf_ros_lib
     ```
 
-## 5. Kcare robotics 프로그램 셋업
-- #### 5.1 파이썬 필요 패키지 설치
+
+## 5. Slamware ROS SDK 패키지 빌드
+- #### 5.1 Slamtec Athena 패키지 압축 해제
+    ```bash
+    # 레포지토리 루트 디렉토리로 이동
+    cd kcare_robotics_sdk_ros2
+    bash script/slam_package_setup.bash
+    ```
+- #### 5.2 패키지 빌드
+    ```bash
+    # 레포지토리 루트 디렉토리로 이동
+    cd kcare_robotics_sdk_ros2
+    colcon build --packages-select slamware_ros_sdk slamware_sdk
+    ```
+
+## 6. Kcare robotics 프로그램 셋업
+- #### 6.1 파이썬 필요 패키지 설치
     ```bash
     # 레포지토리 루트 디렉토리로 이동
     cd kcare_robotics_sdk_ros2
     pip install -r requirements.txt
     ```
 
-- #### 5.2 패키지 빌드(기존 빌드된 ROS2 패키지 소스 필요)
+- #### 6.2 패키지 빌드(기존 빌드된 ROS2 패키지 소스 필요)
     ```bash
     # 레포지토리 루트 디렉토리로 이동
     cd kcare_robotics_sdk_ros2
@@ -97,17 +113,17 @@
 
 
 
-## 6 테스트 및 실행
+## 7 테스트 및 실행
 
 
-- #### 6.1 ROS2 통신을 위한 네트워크 버퍼 크기 조절
+- #### 7.1 ROS2 통신을 위한 네트워크 버퍼 크기 조절
     ```bash
     # 레포지토리 루트 디렉토리로 이동
     cd kcare_robotics_sdk_ros2
     bash setup_network_buffer.sh
     ```
 
-- #### 6.2 UDEV RULES로 시리얼 포트 이름 고정
+- #### 7.2 UDEV RULES로 시리얼 포트 이름 고정
     - 연결된 USb 장치 확인 및 시리얼 고유번호 확인
     ```bash
     # 연결된 USB 포트 목록 확인
@@ -175,14 +191,14 @@
         - Baud Rate -> 115200 (하나만 바꿔도 전체 적용)
 
 
-- #### 6.2 Xarm Ros2 Node 실행
+- #### 7.3 Xarm Ros2 Node 실행
     ```bash
     source install/setup.bash
     ros2 launch xarm_api xarm7_driver.launch.py \
         robot_ip:=192.168.5.212 \   # 로봇 IP에 맞게 IP 변경경
     ```
 
-- #### 6.3 Orbbec Camera Ros2 Node 실행
+- #### 7.4 Orbbec Camera Ros2 Node 실행
     - 연결된 카메라 USB 포트 번호 확인
     ```bash
     # 레포지토리내 submodule 경로로 이동
@@ -201,22 +217,30 @@
         depth_qos:=SENSOR_DATA
     ```
 
+- #### 7.5 Slamware ROS2 Node 실행
+    ```bash
+    # 레포지토리 루트 디렉토리로 이동
+    cd kcare_robotics_sdk_ros2
+    source install/setup.bash
+    ros2 launch slamware_ros_sdk slamware_ros_sdk_server_and_view.xml
 
-    - #### 6.4 Kcare robot 로봇노드 실행(Xarm Node와 동시 실행)
-        - kcare_robot_ros2_controller/launch/kcare_robot.launch.py에서 아래부분 IP 변경
-        ```python
-        def generate_launch_description():
-            xarm_ip_value = '192.168.5.233'    # 이부분 IP 로봇에 맞게 변경
-            # Include launch files
-            xarm_package_dir = get_package_share_directory('xarm_api')
-            xarm_launch_file_dir = os.path.join(xarm_package_dir, 'launch')
-            xarm_launch = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    os.path.join(xarm_launch_file_dir, 'xarm7_driver.launch.py')
-                ),
-                launch_arguments={
-                    'robot_ip': xarm_ip_value, # JSON에서 로드된 IP를 사용
-                }.items()
-            )
-        ```
+    ```
+
+- #### 7.6 Kcare with mobile robot 로봇노드 실행(Xarm Node와 동시 실행)
+    - kcare_robot_ros2_controller/launch/kcare_mobile_robot.launch.py에서 아래부분 IP 변경
+    ```python
+    def generate_launch_description():
+        xarm_ip_value = '192.168.5.233'    # 이부분 IP 로봇에 맞게 변경
+        # Include launch files
+        xarm_package_dir = get_package_share_directory('xarm_api')
+        xarm_launch_file_dir = os.path.join(xarm_package_dir, 'launch')
+        xarm_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(xarm_launch_file_dir, 'xarm7_driver.launch.py')
+            ),
+            launch_arguments={
+                'robot_ip': xarm_ip_value, # JSON에서 로드된 IP를 사용
+            }.items()
+        )
+    ```
 

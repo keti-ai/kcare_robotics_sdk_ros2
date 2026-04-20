@@ -22,7 +22,7 @@ class Mobile_Controller(Node):
         robot_config = load_robot_config(
             package_name='kcare_robot_ros2_controller', # config 파일이 있는 패키지 이름
             config_file_env_var='ROBOT_NAME',
-            default_robot_name='default',
+            default_robot_name='kcare_1',
             logger=self.get_logger() # 노드의 로거를 config_loader에 전달
         )
 
